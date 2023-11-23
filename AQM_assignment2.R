@@ -1,8 +1,14 @@
-# Load the necessary library
+# Installing necessary packages
+
+install.packages(c("ggplot2, dplyr, stargazer, lfe"))
+
+# Load the necessary libraries
 library(ggplot2)
 library(dplyr)
+library(stargazer)
+library(lfe)
 
-load("/Users/thomaspadkjaer/Downloads/data_mpyear.rda")
+load("C:\\Users\\vmo\\Desktop\\R_filer\\data_mpyear.rda")
 data
 # Assuming the data is loaded into a variable named 'data'
 # Replace 'data' with the actual name of the data frame in your RDA file
@@ -51,4 +57,55 @@ ggplot(d1_a, aes(x = year)) +
         axis.text.x = element_text(angle = 360)) + 
   theme(axis.line.x = element_line(color="grey", size = 0.5),
         axis.line.y = element_line(color="grey", size = 0.5))
+
+#### Table 1 ####
+
+# Vote rebellions
+
+t1ra <- felm(rebel ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data)
+summary(tab1_reb_all)
+
+t1rc <- felm(rebel ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(tab1_reb_con)
+
+t1rl <- felm(rebel ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$lab==1,])
+summary(tab1_reb_lab)
+
+# Vote participation
+
+t1pa <- felm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data)
+summary(tab1_par_all)
+
+t1pc <- felm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(tab1_par_con)
+
+t1pl <- felm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$lab==1,])
+summary(tab1_par_lab)
+
+# Number of parliamentary questions (q) log
+
+t1qa <- felm(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data)
+summary(tab1_npq_all)
+
+t1qc <- felm(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(tab1_npq_con)
+
+t1ql <- felm(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$lab==1,])
+summary(tab1_npq_lab)
+
+# Making an output for the regression results
+
+stargazer(t1ra, t1rc, t1rl, t1pa, t1pc, t1pl, t1qa, t1qc, t1ql,
+          dep.var.labels=c(rep("Vote Rebellion (Share)", 1), rep("Vote Participation (Share)", 1), rep("log(Number Parliamentary Questions + 1)", 1)),
+          covariate.labels=c("Earnings ≥ £1,000"), 
+          column.labels=rep(c("All", "Conservative", "Labour"), 3))
+  
+#### Figure 2 ####
+
+# Creating the three regressions
+
+d2_a_low <- lm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave, data=data[data$dist.tercile.con==1,])
+summary(d2_a_low)
+
+d2_a <- ggplot(data, aes(x = present, y = dist.tercile.con))
 
