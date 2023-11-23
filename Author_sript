@@ -1,0 +1,1158 @@
+
+## This code recreates all tables and figures in the article
+## All analyses were conducted using R version 4.1.3 (2022-03-10) -- "One Push-Up" on platform x86_64-apple-darwin17.0 (64-bit)
+
+rm(list=ls(all=TRUE))
+
+
+# set working directory
+setwd("YOURPATH/replication")
+
+
+# set seed
+set.seed(1234)
+
+# install packages if needed
+# install.packages(c("stargazer", "lfe", "rgdal", "data.table", "shape", "maps", "MASS"))
+
+# load needed packages
+library(stargazer)
+library(lfe)
+library(rgdal)
+library(data.table)
+library(shape)
+library(maps)
+library(MASS)
+
+
+
+# Define functions needed later in the code
+output.did.flex <- function(model){
+	ses <- sqrt(diag(model$clustervcv))
+
+	pe <- c(model$coef["beforejob.2",], model$coef["beforejob.1",], model$coef["bin.1000",], model$coef["afterjob.1",], model$coef["afterjob.2",])
+	lower <- c(model$coef["beforejob.2",] + qnorm(0.025)*ses["beforejob.2"], model$coef["beforejob.1",] + qnorm(0.025)*ses["beforejob.1"], model$coef["bin.1000",] + qnorm(0.025)*ses["bin.1000"], model$coef["afterjob.1",] + qnorm(0.025)*ses["afterjob.1"], model$coef["afterjob.2",] + qnorm(0.025)*ses["afterjob.2"])
+	upper <- c(model$coef["beforejob.2",] + qnorm(0.975)*ses["beforejob.2"], model$coef["beforejob.1",] + qnorm(0.975)*ses["beforejob.1"], model$coef["bin.1000",] + qnorm(0.975)*ses["bin.1000"], model$coef["afterjob.1",] + qnorm(0.975)*ses["afterjob.1"], model$coef["afterjob.2",] + qnorm(0.975)*ses["afterjob.2"])
+
+	out <- rbind(pe, lower, upper)
+	out
+}
+
+
+
+output.did.flex.diff <- function(model){
+	draw <- mvrnorm(10000, model$coef, model$clustervcv)
+
+	quant <- draw[,"beforejob.1"] - draw[,"beforejob.2"]
+	diff <- mean(quant)
+	quantdiff <- quantile(quant, c(0.005, 0.025, 0.05, 0.95, 0.975, 0.995))
+	sig <- ifelse((sign(quantdiff)[3]==sign(quantdiff)[4])==T, "\u2020", "")		
+	sig <- ifelse((sign(quantdiff)[2]==sign(quantdiff)[5])==T, "*", sig)		
+	sig <- ifelse((sign(quantdiff)[1]==sign(quantdiff)[6])==T, "**", sig)
+	out1 <- paste0(sprintf("%.3f", diff))
+	sig1 <- sig
+
+	quant <- draw[,"bin.1000"] - draw[,"beforejob.1"]
+	diff <- mean(quant)
+	quantdiff <- quantile(quant, c(0.005, 0.025, 0.05, 0.95, 0.975, 0.995))
+	sig <- ifelse((sign(quantdiff)[3]==sign(quantdiff)[4])==T, "\u2020", "")		
+	sig <- ifelse((sign(quantdiff)[2]==sign(quantdiff)[5])==T, "*", sig)		
+	sig <- ifelse((sign(quantdiff)[1]==sign(quantdiff)[6])==T, "**", sig)
+	out2 <- paste0(sprintf("%.3f", diff))
+	sig2 <- sig
+
+	quant <- draw[,"afterjob.1"] - draw[,"bin.1000"]
+	diff <- mean(quant)
+	quantdiff <- quantile(quant, c(0.005, 0.025, 0.05, 0.95, 0.975, 0.995))
+	sig <- ifelse((sign(quantdiff)[3]==sign(quantdiff)[4])==T, "\u2020", "")		
+	sig <- ifelse((sign(quantdiff)[2]==sign(quantdiff)[5])==T, "*", sig)		
+	sig <- ifelse((sign(quantdiff)[1]==sign(quantdiff)[6])==T, "**", sig)
+	out3 <- paste0(sprintf("%.3f", diff))
+	sig3 <- sig
+
+	quant <- draw[,"afterjob.2"] - draw[,"afterjob.1"]
+	diff <- mean(quant)
+	quantdiff <- quantile(quant, c(0.005, 0.025, 0.05, 0.95, 0.975, 0.995))
+	sig <- ifelse((sign(quantdiff)[3]==sign(quantdiff)[4])==T, "\u2020", "")		
+	sig <- ifelse((sign(quantdiff)[2]==sign(quantdiff)[5])==T, "*", sig)		
+	sig <- ifelse((sign(quantdiff)[1]==sign(quantdiff)[6])==T, "**", sig)
+	out4 <- paste0(sprintf("%.3f", diff))
+	sig4 <- sig
+
+	out <- list()
+	out[[1]] <- rbind(out1, out2, out3, out4)
+	out[[2]] <- rbind(sig1, sig2, sig3, sig4)
+	out
+}
+
+
+output.did.flex.job <- function(model, job){
+	pe <- c(model$coef[paste0("beforejob.", job, ".2"),], model$coef[paste0("beforejob.", job, ".1"),], model$coef[paste0("I(", job, " > 0)TRUE"),], model$coef[paste0("afterjob.", job, ".1"),], model$coef[paste0("afterjob.", job, ".2"),])
+	lower <- c(model$coef[paste0("beforejob.", job, ".2"),] + qnorm(0.025)*model$rse[paste0("beforejob.", job, ".2")], model$coef[paste0("beforejob.", job, ".1"),] + qnorm(0.025)*model$rse[paste0("beforejob.", job, ".1")], model$coef[paste0("I(", job, " > 0)TRUE"),] + qnorm(0.025)*model$rse[paste0("I(", job, " > 0)TRUE")], model$coef[paste0("afterjob.", job, ".1"),] + qnorm(0.025)*model$rse[paste0("afterjob.", job, ".1")], model$coef[paste0("afterjob.", job, ".2"),] + qnorm(0.025)*model$rse[paste0("afterjob.", job, ".2")])
+	upper <- c(model$coef[paste0("beforejob.", job, ".2"),] + qnorm(0.975)*model$rse[paste0("beforejob.", job, ".2")], model$coef[paste0("beforejob.", job, ".1"),] + qnorm(0.975)*model$rse[paste0("beforejob.", job, ".1")], model$coef[paste0("I(", job, " > 0)TRUE"),] + qnorm(0.975)*model$rse[paste0("I(", job, " > 0)TRUE")], model$coef[paste0("afterjob.", job, ".1"),] + qnorm(0.975)*model$rse[paste0("afterjob.", job, ".1")], model$coef[paste0("afterjob.", job, ".2"),] + qnorm(0.975)*model$rse[paste0("afterjob.", job, ".2")])
+
+	out <- rbind(pe, lower, upper)
+	out
+}
+
+
+output.did.flex.job.diff <- function(model, job){
+	draw <- mvrnorm(10000, model$coef, model$robustvcv)
+
+	quant <- draw[,paste0("beforejob.", job, ".1")] - draw[,paste0("beforejob.", job, ".2")]
+	diff <- mean(quant)
+	pval <- 2*pnorm(-abs(mean(quant)/sd(quant)))
+	sig <- ifelse(pval<=0.1, "\u2020", "")		
+	sig <- ifelse(pval<=0.05, "*", sig)		
+	sig <- ifelse(pval<=0.01, "**", sig)
+	out1 <- paste0(sprintf("%.3f", diff))
+	sig1 <- sig
+
+	quant <- draw[,paste0("I(", job, " > 0)TRUE")] - draw[,paste0("beforejob.", job, ".1")]
+	diff <- mean(quant)
+	pval <- 2*pnorm(-abs(mean(quant)/sd(quant)))
+	sig <- ifelse(pval<=0.1, "\u2020", "")		
+	sig <- ifelse(pval<=0.05, "*", sig)		
+	sig <- ifelse(pval<=0.01, "**", sig)
+	out2 <- paste0(sprintf("%.3f", diff))
+	sig2 <- sig
+
+	quant <- draw[,paste0("afterjob.", job, ".1")] - draw[,paste0("I(", job, " > 0)TRUE")]
+	diff <- mean(quant)
+	pval <- 2*pnorm(-abs(mean(quant)/sd(quant)))
+	sig <- ifelse(pval<=0.1, "\u2020", "")		
+	sig <- ifelse(pval<=0.05, "*", sig)		
+	sig <- ifelse(pval<=0.01, "**", sig)
+	out3 <- paste0(sprintf("%.3f", diff))
+	sig3 <- sig
+
+	quant <- draw[,paste0("afterjob.", job, ".2")] - draw[,paste0("afterjob.", job, ".1")]
+	diff <- mean(quant)
+	pval <- 2*pnorm(-abs(mean(quant)/sd(quant)))
+	sig <- ifelse(pval<=0.1, "\u2020", "")		
+	sig <- ifelse(pval<=0.05, "*", sig)		
+	sig <- ifelse(pval<=0.01, "**", sig)
+	out4 <- paste0(sprintf("%.3f", diff))
+	sig4 <- sig
+
+	out <- list()
+	out[[1]] <- rbind(out1, out2, out3, out4)
+	out[[2]] <- rbind(sig1, sig2, sig3, sig4)	
+	out
+}
+
+
+
+# load the main data
+load("data/data_mpyear.rda")
+
+
+
+
+################
+### FIGURE 1 ###
+################
+
+
+earnings.sum <- tapply(data$earnings.all.infl, data$year, sum)/1000000
+earnings.sum.con <- tapply(data$earnings.all.infl[data$con==1], data$year[data$con==1], sum)/1000000
+earnings.sum.lab <- tapply(data$earnings.all.infl[data$lab==1], data$year[data$lab==1], sum)/1000000
+earnings.sum.oth <- tapply(data$earnings.all.infl[data$oth==1], data$year[data$oth==1], sum)/1000000
+
+
+earnings.share <- tapply(data$earnings.all.infl>1000, data$year, sum)/tapply(data$earnings.all.infl>=0, data$year, sum)
+earnings.share.con <- tapply(data$earnings.all.infl[data$con==1]>1000, data$year[data$con==1], sum)/tapply(data$earnings.all.infl[data$con==1]>=0, data$year[data$con==1], sum)
+earnings.share.lab <- tapply(data$earnings.all.infl[data$lab==1]>1000, data$year[data$lab==1], sum)/tapply(data$earnings.all.infl[data$lab==1]>=0, data$year[data$lab==1], sum)
+earnings.share.oth <- tapply(data$earnings.all.infl[data$oth==1]>1000, data$year[data$oth==1], sum)/tapply(data$earnings.all.infl[data$oth==1]>=0, data$year[data$oth==1], sum)
+
+
+
+earnings.mean.nonull <- tapply(data$earnings.all.infl[data$earnings.all.infl>0], data$year[data$earnings.all.infl>0], mean)
+earnings.mean.nonull.con <- tapply(data$earnings.all.infl[data$earnings.all.infl>0 & data$con==1], data$year[data$earnings.all.infl>0 & data$con==1], mean)
+earnings.mean.nonull.lab <- tapply(data$earnings.all.infl[data$earnings.all.infl>0 & data$lab==1], data$year[data$earnings.all.infl>0 & data$lab==1], mean)
+earnings.mean.nonull.oth <- tapply(data$earnings.all.infl[data$earnings.all.infl>0 & data$oth==1], data$year[data$earnings.all.infl>0 & data$oth==1], mean)
+
+
+
+### Panel (a)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_1a.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(unique(data$year), earnings.sum, type="n", ylim=c(0, 7), lwd=4, xlab="Year", ylab="Total Earnings in Million \u00A3", axes=F)
+axis(1)
+axis(2)
+abline(v=2010, col="grey", lwd=2.5, lty=3)
+abline(v=2015, col="grey", lwd=2.5, lty=3)
+abline(h=0, col="grey", lwd=2.5)
+points(unique(data$year), earnings.sum, type="l", lwd=3)
+points(unique(data$year), earnings.sum.con, type="l", lwd=3, lty=2)
+points(unique(data$year), earnings.sum.lab, type="l", lwd=3, lty=6)
+points(unique(data$year), earnings.sum.oth, type="l", lwd=3, lty=3)
+text(2013, 5.65, "All", cex=1)
+text(2013, 4.15, "Conservative", cex=1)
+text(2013, 1.5, "Labour", cex=1)
+text(2013, 0.2, "Other", cex=1)
+dev.off()
+
+
+### Panel (b)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_1b.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(unique(data$year), earnings.share, type="n", ylim=c(0, 0.31), lwd=4, xlab="Year", ylab="Share of MPs with Outside Income \u2265 \u00A31,000", axes=F)
+axis(1)
+axis(2)
+abline(v=2010, col="grey", lwd=2.5, lty=3)
+abline(v=2015, col="grey", lwd=2.5, lty=3)
+abline(h=0, col="grey", lwd=2.5)
+points(unique(data$year), earnings.share, type="l", lwd=3)
+points(unique(data$year), earnings.share.con, type="l", lwd=3, lty=2)
+points(unique(data$year), earnings.share.lab, type="l", lwd=3, lty=6)
+points(unique(data$year), earnings.share.oth, type="l", lwd=3, lty=3)
+text(2013, 0.22, "All", cex=1)
+text(2013, 0.29, "Conservative", cex=1)
+text(2013, 0.1, "Labour", cex=1)
+text(2013, 0.17, "Other", cex=1)
+dev.off()
+
+
+### Panel (c)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_1c.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(unique(data$year), earnings.mean.nonull, type="n", ylim=c(0, 55000), lwd=4, xlab="Year", ylab="Mean Annual Earnings in \u00A3", axes=F)
+axis(1)
+axis(2, at=axTicks(2), labels=formatC(axTicks(2), format="d", big.mark=','))
+abline(v=2010, col="grey", lwd=2.5, lty=3)
+abline(v=2015, col="grey", lwd=2.5, lty=3)
+abline(h=0, col="grey", lwd=2.5)
+points(unique(data$year), earnings.mean.nonull, type="l", lwd=3)
+points(unique(data$year), earnings.mean.nonull.con, type="l", lwd=3, lty=2)
+points(unique(data$year), earnings.mean.nonull.lab, type="l", lwd=3, lty=6)
+points(unique(data$year), earnings.mean.nonull.oth, type="l", lwd=3, lty=3)
+text(2013, 32250, "All", cex=1)
+text(2012.9, 37300, "Conservative", cex=1)
+text(2013, 25000, "Labour", cex=1)
+text(2013, 17000, "Other", cex=1)
+dev.off()
+
+
+
+### Panel (d)
+tmp1 <- c(sum(data$job_director), sum(data$job_consultant), sum(data$job_board), sum(data$job_prof))
+tmp1 <- (tmp1/sum(tmp1))
+tmp2 <- c("Director,\nChairman,\nPresident,\nPartner", "Consultant,\nAdvisor", "Board\nMember", "Professional\nPosition")
+jobtitles <- data.frame(rev(tmp2), rev(tmp1))
+colnames(jobtitles) <- c("position", "share")
+
+jobtitles <- jobtitles[order(jobtitles$share, decreasing=F),]
+
+
+cairo_pdf(width=5*1.5, height=5, file="output/graphs/fig_1d.pdf")
+par(mar = c(3,7,0,1), mgp=c(2,0.5,0))
+barplot(jobtitles$share, names.arg=jobtitles$position, las=1, horiz=T, cex.names=1.2, xlim=c(0,max(jobtitles$share)), col="grey", border=NA, xlab="Share")
+dev.off()
+
+
+
+### Panel (e)
+tmp1 <- c(sum(data$indcat_health), sum(data$indcat_finance), sum(data$indcat_consulting), sum(data$indcat_knowledge_fp), sum(data$indcat_knowledge_nfp), sum(data$indcat_goods), sum(data$indcat_services), sum(data$indcat_other)) 
+tmp1 <- (tmp1/sum(tmp1))
+
+tmp2 <- c("Health", "Finance", "Consulting", "Knowledge,\nfor-profit", "Knowledge,\nnot-for-profit", "Goods", "Services", "Other")
+
+industry <- data.frame(rev(tmp2), rev(tmp1))
+colnames(industry) <- c("position", "share")
+
+industry <- industry[order(industry$share, decreasing=F),]
+industry <- rbind(industry[industry$position=="Other",], industry[industry$position!="Other",])
+
+cairo_pdf(width=5*1.5, height=5, file="output/graphs/fig_1e.pdf")
+par(mar = c(3,7,0,1), mgp=c(2,0.5,0))
+barplot(industry$share, names.arg=industry$position, las=1, horiz=T, cex.names=1.2, xlim=c(0,max(industry$share)), col="grey", border=NA, xlab="Share")
+dev.off()
+
+
+
+
+
+
+###############
+### TABLE 1 ###
+###############
+
+
+m1 <- felm(rebel ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data)
+summary(m1)
+
+m1c <- felm(rebel ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m1c)
+
+m1l <- felm(rebel ~ bin.1000 + shadow.cabinet + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$lab==1,])
+summary(m1l)
+
+
+
+m2 <- felm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data)
+summary(m2)
+
+m2c <- felm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m2c)
+
+m2l <- felm(present ~ bin.1000 + shadow.cabinet + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$lab==1,])
+summary(m2l)
+
+
+
+m3 <- felm(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id | 0 | id, data=data)
+summary(m3)
+
+m3c <- felm(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m3c)
+
+m3l <- felm(questcount.log ~ bin.1000 + shadow.cabinet + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$lab==1,])
+summary(m3l)
+
+
+
+
+
+stargazer(m1, m1c, m1l, m2, m2c, m2l, m3, m3c, m3l,
+	dep.var.labels=c(rep("Vote Rebellion (Share)", 1), rep("Vote Participation (Share)", 1), rep("log(Number Parliamentary Questions+1)", 1)),
+	covariate.labels=c("Earnings ≥ £1,000"), 
+	column.labels=rep(c("All", "Conservative", "Labour"), 3),
+	no.space=T,
+	add.lines=list(c("Outcome Mean", sprintf("%.3f", mean(data$rebel, na.rm=T)), sprintf("%.3f", mean(data$rebel[data$con==1], na.rm=T)), sprintf("%.3f", mean(data$rebel[data$lab==1], na.rm=T)), sprintf("%.3f", mean(data$present, na.rm=T)), sprintf("%.3f", mean(data$present[data$con==1], na.rm=T)), sprintf("%.3f", mean(data$present[data$lab==1], na.rm=T)), sprintf("%.3f", mean(data$questcount.log, na.rm=T)), sprintf("%.3f", mean(data$questcount.log[data$con==1], na.rm=T)), sprintf("%.3f", mean(data$questcount.log[data$lab==1], na.rm=T)))),
+	out="output/tables/tab_1.tex")
+
+
+
+
+
+
+
+
+################
+### FIGURE 2 ###
+################
+
+
+### Panel (a)
+
+m2c.dist.1 <- felm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==1,])
+summary(m2c.dist.1)
+
+m2c.dist.2 <- felm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==2,])
+summary(m2c.dist.2)
+
+m2c.dist.3 <- felm(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==3,])
+summary(m2c.dist.3)
+
+
+points <- c(m2c.dist.1$coef[1], m2c.dist.2$coef[1], m2c.dist.3$coef[1])
+lower <- c((m2c.dist.1$coef+qnorm(0.025)*sqrt(diag(m2c.dist.1$clustervcv)))[1], (m2c.dist.2$coef+qnorm(0.025)*sqrt(diag(m2c.dist.2$clustervcv)))[1], (m2c.dist.3$coef+qnorm(0.025)*sqrt(diag(m2c.dist.3$clustervcv)))[1])
+upper <- c((m2c.dist.1$coef+qnorm(0.975)*sqrt(diag(m2c.dist.1$clustervcv)))[1], (m2c.dist.2$coef+qnorm(0.975)*sqrt(diag(m2c.dist.2$clustervcv)))[1], (m2c.dist.3$coef+qnorm(0.975)*sqrt(diag(m2c.dist.3$clustervcv)))[1])
+
+
+cairo_pdf(width=5, height=5, file="output/graphs/fig_2a.pdf")
+par(mar = c(3.5,4.5,1,1), mgp=c(2,0.5,0))
+plot(m2c.dist.1$coef[1], 1, xlim=c(min(lower), max(upper)), ylim=c(0.9, 3.1), type="n", yaxt="n", ylab="", xlab="Regression Coefficients", cex=1.5, axes=F)
+abline(v=0, lwd=4, col="gray")
+abline(h=c(1:length(points)), col="lightgrey", lwd=2)
+
+points(points[1], 3, pch=16, cex=2)
+lines(c(lower[1], upper[1]), c(3, 3), lwd=4.5)
+
+points(points[2], 2, pch=16, cex=2)
+lines(c(lower[2], upper[2]), c(2, 2), lwd=4.5)
+
+points(points[3], 1, pch=16, cex=2)
+lines(c(lower[3], upper[3]), c(1, 1), lwd=4.5)
+
+axis(2, at=1:3, c("Highest  \nTercile  ", "Middle  \nTercile  ", "Lowest  \nTercile  "), cex.axis=1.2, las=2)
+axis(1)
+dev.off()
+
+
+
+
+### Panel (c)
+
+m2c.dist.1 <- felm(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==1,])
+summary(m2c.dist.1)
+
+m2c.dist.2 <- felm(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==2,])
+summary(m2c.dist.2)
+
+m2c.dist.3 <- felm(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==3,])
+summary(m2c.dist.3)
+
+
+points <- c(m2c.dist.1$coef[1], m2c.dist.2$coef[1], m2c.dist.3$coef[1])
+lower <- c((m2c.dist.1$coef+qnorm(0.025)*sqrt(diag(m2c.dist.1$clustervcv)))[1], (m2c.dist.2$coef+qnorm(0.025)*sqrt(diag(m2c.dist.2$clustervcv)))[1], (m2c.dist.3$coef+qnorm(0.025)*sqrt(diag(m2c.dist.3$clustervcv)))[1])
+upper <- c((m2c.dist.1$coef+qnorm(0.975)*sqrt(diag(m2c.dist.1$clustervcv)))[1], (m2c.dist.2$coef+qnorm(0.975)*sqrt(diag(m2c.dist.2$clustervcv)))[1], (m2c.dist.3$coef+qnorm(0.975)*sqrt(diag(m2c.dist.3$clustervcv)))[1])
+
+
+cairo_pdf(width=5, height=5, file="output/graphs/fig_2c.pdf")
+par(mar = c(3.5,4.5,1,1), mgp=c(2,0.5,0))
+plot(points[1], 1, xlim=c(min(lower), max(upper)), ylim=c(0.9, 3.1), type="n", yaxt="n", ylab="", xlab="Regression Coefficients", cex=1.5, axes=F)
+abline(v=0, lwd=4, col="gray")
+abline(h=c(1:length(points)), col="lightgrey", lwd=2)
+
+points(points[1], 3, pch=16, cex=2)
+lines(c(lower[1], upper[1]), c(3, 3), lwd=4.5)
+
+points(points[2], 2, pch=16, cex=2)
+lines(c(lower[2], upper[2]), c(2, 2), lwd=4.5)
+
+points(points[3], 1, pch=16, cex=2)
+lines(c(lower[3], upper[3]), c(1, 1), lwd=4.5)
+
+axis(2, at=1:3, c("Highest  \nTercile  ", "Middle  \nTercile  ", "Lowest  \nTercile  "), cex.axis=1.2, las=2)
+axis(1)
+dev.off()
+
+
+
+### Panel (b)
+unzip("data/map/GBR_adm0.zip", exdir="data/map")
+shape <- readOGR(dsn="data/map/replication/data/map", layer="GBR_adm0")
+wgs84 = '+proj=longlat +datum=WGS84'
+shape <- spTransform(shape, CRS(wgs84))
+
+
+load("data/employment_coords.rda")
+
+locdata <- locdata[locdata$foreign==0,]
+locdata <- locdata[locdata$dist.tercile.con==3,]
+
+box.min.x <- min(locdata$const.x, locdata$employ.x)
+box.min.y <- min(locdata$const.y, locdata$employ.y)
+box.max.x <- max(locdata$const.x, locdata$employ.x)
+box.max.y <- max(locdata$const.y, locdata$employ.y)
+
+
+usedata <- data[data$con==1 & data$dist.tercile.con==3,]
+usedata <- data.table(usedata)
+usedata <- usedata[, list(const.x=unique(const.x), const.y=unique(const.y)), by="id"]
+ 
+
+
+cairo_pdf(width=6, height=6, file="output/graphs/fig_2b.pdf")
+par(mar = c(1.5,1.5,1.5,1.5), mgp=c(2,0.5,0))
+plot(shape, xlim=c(box.min.x, box.max.x), ylim=c(box.min.y, box.max.y))
+
+for(i in 1:dim(locdata)[1]){
+	Arrows(locdata$const.x[i], locdata$const.y[i], locdata$employ.x[i], locdata$employ.y[i], arr.length=0.2, arr.width=0.15, arr.type="triangle", col="grey60", lwd=2)
+}
+points(usedata$const.x, usedata$const.y, pch=16, cex=1.25)
+points(-0.124722, 51.499167, pch=8, cex=2.5, lwd=3)
+map.scale(x=-0.2, y=50.2, ratio=FALSE, relwidth=0.1)  
+dev.off()
+
+
+
+
+
+
+
+
+################
+### FIGURE 3 ###
+################
+
+
+# Panel (a)
+m3c.job <- felm(questcount.log ~ I(job_director.1000>0) + I(job_board.1000>0) + I(job_consultant.1000>0) + I(job_prof.1000>0) + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m3c.job)
+
+label <- rev(c("Director, \nChairman, \nPresident, \nPartner ","Board \nMember ", "Consultant, \nAdvisor ", "Professional \nPosition "))
+point <- rev(m3c.job$coef[1:length(label)])
+lower <- rev((m3c.job$coef+qnorm(0.025)*sqrt(diag(m3c.job$clustervcv)))[1:length(label)])
+upper <- rev((m3c.job$coef+qnorm(0.975)*sqrt(diag(m3c.job$clustervcv)))[1:length(label)])
+
+m <- data.frame(point, lower, upper, label)
+m <- m[order(m$point, decreasing=F),]
+
+
+cairo_pdf(width=5, height=5, file="output/graphs/fig_3a.pdf")
+par(mar = c(3.5,5,1,1), mgp=c(2,0.5,0))
+plot(m$point, 1:length(m$point), xlim=c(min(m$lower), max(m$upper)), ylim=c(0.5, (length(m$point)+0.5)), pch=16, yaxt="n", ylab="", xlab="Regression Coefficients", cex=1.5, type="n", axes=F)
+abline(v=0, lwd=4, col="gray")
+abline(h=c(1:length(m$point)), col="lightgrey", lwd=2)
+
+points(m$point, 1:length(m$point), pch=16, cex=1.75)
+for(i in 1:length(m$point)){
+	lines(c(m$lower[i], m$upper[i]), c(i,i), lwd=4)
+}
+
+axis(2, at=1:length(m$point), m$label, cex.axis=0.85, las=2)
+axis(1)
+dev.off()
+
+
+
+# Panel (b)
+m3c.ind <- felm(questcount.log ~ I(indcat_health.1000 > 0) + I(indcat_finance.1000 > 0) + I(indcat_consulting.1000 > 0) + I(indcat_knowledge_fp.1000 > 0) + I(indcat_knowledge_nfp.1000 > 0) + I(indcat_goods.1000 > 0) + I(indcat_services.1000 > 0) + I(indcat_other.1000 > 0) + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m3c.ind)
+
+label <- rev(c("Health ", "Finance ", "Consulting ", "Knowledge, \nfor-profit ", "Knowledge, \nnot-for-profit ", "Goods ", "Services ", "Other "))
+point <- rev(m3c.ind$coef[1:length(label)])
+lower <- rev((m3c.ind$coef+qnorm(0.025)*sqrt(diag(m3c.ind$clustervcv)))[1:length(label)])
+upper <- rev((m3c.ind$coef+qnorm(0.975)*sqrt(diag(m3c.ind$clustervcv)))[1:length(label)])
+
+
+m <- data.frame(point, lower, upper, label)
+m <- m[order(m$point, decreasing=F),]
+
+
+cairo_pdf(width=5, height=5, file="output/graphs/fig_3b.pdf")
+par(mar = c(3.5,5,1,1), mgp=c(2,0.5,0))
+plot(m$point, 1:length(m$point), xlim=c(min(m$lower), max(m$upper)), ylim=c(0.5, (length(m$point)+0.5)), pch=16, yaxt="n", ylab="", xlab="Regression Coefficients", cex=1.5, type="n", axes=F)
+abline(v=0, lwd=4, col="gray")
+abline(h=c(1:length(m$point)), col="lightgrey", lwd=2)
+
+points(m$point, 1:length(m$point), pch=16, cex=1.75)
+for(i in 1:length(m$point)){
+	lines(c(m$lower[i], m$upper[i]), c(i,i), lwd=4)
+}
+
+axis(2, at=1:length(m$point), m$label, cex.axis=0.85, las=2)
+axis(1)
+dev.off()
+
+
+
+
+
+
+################
+### FIGURE 4 ###
+################
+
+## By Topic of Question
+load("data/data_questions_topic.rda")
+
+
+tpcs <- unique(questtopicdata$topic)
+# no committees
+tpcs <- tpcs[tpcs!="Committee on the Electoral Commission"]
+tpcs <- tpcs[tpcs!="Committee, Parliamentary Standards Authority"]
+tpcs <- tpcs[tpcs!="House of Commons Commission"]
+tpcs <- tpcs[tpcs!="Leader of the House"]
+
+
+
+# Con, all
+points <- ses <- lower <- upper <- topic <- NULL
+for(i in 1:length(tpcs)){
+	tryCatch({	
+		m1 <- felm(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=questtopicdata[questtopicdata$topic==tpcs[i] & questtopicdata$con==1,])
+		points <- c(points, m1$coefficients[1])
+		ses <- c(ses, sqrt(diag(m1$clustervcv))[1])
+		lower <- c(lower, (m1$coefficients+qnorm(0.025)*sqrt(diag(m1$clustervcv)))[1])
+		upper <- c(upper, (m1$coefficients+qnorm(0.975)*sqrt(diag(m1$clustervcv)))[1])
+		topic <- c(topic, tpcs[i])
+	}, error=function(e) {
+		points <- c(points, NA)
+		ses <- c(ses, NA)
+		lower <- c(lower, NA)
+		upper <- c(upper, NA)
+		topic <- c(topic, NA)
+	})
+}
+
+m <- data.frame(points, ses, lower, upper, topic)
+m <- m[order(m$points),]
+
+
+
+cairo_pdf(width=5*1.62, height=5, file="output/graphs/fig_4.pdf")
+par(mar = c(4,10,1,1), mgp=c(2,0.5,0))
+plot(m$points, 1:length(m$points), xlim=c(min(m$lower), max(m$upper)), pch=16, yaxt="n", ylab="", xlab="Regression Coefficients", type="n", axes=F)
+abline(v=0, col="gray", lwd=2)
+abline(h=c(1:length(m$point)), col="lightgrey", lwd=1)
+
+points(m$point, 1:length(m$point), pch=16, cex=1)
+for(i in 1:length(m$points)){
+	lines(c(m$lower[i], m$upper[i]), c(i,i), lwd=2.2)
+}
+axis(2, at=c(1:length(m$points)), paste0(as.character(m$topic), " "), cex.axis=0.65, las=2)
+axis(1)
+dev.off()
+
+
+
+
+################
+### FIGURE 5 ###
+################
+
+
+## Determinants of point estimates
+deptdata <- read.csv("data/department_characteristics.csv")
+
+deptdata$topic <- as.character(deptdata$topic)
+m$topic <- as.character(m$topic)
+
+m <- merge(m, deptdata, by="topic", all.x=T)
+
+
+draws <- NULL
+for(j in 1:dim(m)[1]){
+	add <- rnorm(1000, m$points[j], m$ses[j])
+	draws <- rbind(draws, add)
+}
+colnames(draws) <- paste0("draw.", 1:1000)
+
+m <- cbind(m, draws)
+
+
+
+# Panel (a)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_5a.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(log(m$proc.amount + 1), m$points, ylim=c(min(m$lower), max(m$upper)), pch=16, xlab="log(Procurement Spending Bn.£ + 1)", ylab="Regression Coefficient", cex=1.5, axes=F)
+for(i in 1:length(m$point)){
+	lines(c(log(m$proc.amount + 1)[i], log(m$proc.amount + 1)[i]), c(m$lower[i], m$upper[i]), lwd=3)
+}
+abline(lm(points ~ log(proc.amount + 1), data=m), lwd=3)
+text(0.5, max(m$upper), paste0("r=", round(cor(log(m$proc.amount + 1), m$points), 2)), cex=1.5)
+axis(1)
+axis(2)
+dev.off()
+
+
+# Panel (b)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_5b.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(log(m$projects.number + 1), m$points, ylim=c(min(m$lower), max(m$upper)), pch=16, xlab="log(Number of Major Projects + 1)", ylab="Regression Coefficient", cex=1.5, axes=F)
+for(i in 1:length(m$point)){
+	lines(c(log(m$projects.number + 1)[i], log(m$projects.number + 1)[i]), c(m$lower[i], m$upper[i]), lwd=3)
+}
+abline(lm(points ~ log(projects.number + 1), data=m), lwd=3)
+text(0.4, max(m$upper), paste0("r=", round(cor(log(m$projects.number + 1), m$points), 2)), cex=1.5)
+axis(1)
+axis(2)
+dev.off()
+
+
+# Panel (c)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_5c.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(log(m$budget.amount + 1), m$points, ylim=c(min(m$lower), max(m$upper)), pch=16, xlab="log(Operating Budget Bn.£ + 1)", ylab="Regression Coefficient", cex=1.5, axes=F)
+for(i in 1:length(m$point)){
+	lines(c(log(m$budget.amount + 1)[i], log(m$budget.amount + 1)[i]), c(m$lower[i], m$upper[i]), lwd=3)
+}
+abline(lm(points ~ log(budget.amount + 1), data=m), lwd=3)
+text(0.5, max(m$upper), paste0("r=", round(cor(log(m$budget.amount + 1), m$points), 2)), cex=1.5)
+axis(1)
+axis(2)
+dev.off()
+
+
+# Panel (d)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_5d.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(log(m$employees + 1), m$points, ylim=c(min(m$lower), max(m$upper)), pch=16, xlab="log(Number of Employees + 1)", ylab="Regression Coefficient", cex=1.5, axes=F)
+for(i in 1:length(m$point)){
+	lines(c(log(m$employees + 1)[i], log(m$employees + 1)[i]), c(m$lower[i], m$upper[i]), lwd=3)
+}
+abline(lm(points ~ log(employees + 1), data=m), lwd=3)
+text(4.3, max(m$upper), paste0("r=", round(cor(log(m$employees + 1), m$points), 2)), cex=1.5)
+axis(1)
+axis(2)
+dev.off()
+
+
+
+
+
+################
+### FIGURE 6 ###
+################
+
+label <- point <- lower <- upper <- NULL
+
+m <- felm(quest.code.urgingaction.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m)
+label <- c(label, "Question \nUrging \nAction ")
+point <- c(point, m$coef[1])
+lower <- c(lower, (m$coef + qnorm(0.025)*sqrt(diag(m$clustervcv)))[1])
+upper <- c(upper, (m$coef + qnorm(0.975)*sqrt(diag(m$clustervcv)))[1])
+
+
+m <- felm(quest.code.timing.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m)
+label <- c(label, "Question \nabout \nTiming ")
+point <- c(point, m$coef[1])
+lower <- c(lower, (m$coef + qnorm(0.025)*sqrt(diag(m$clustervcv)))[1])
+upper <- c(upper, (m$coef + qnorm(0.975)*sqrt(diag(m$clustervcv)))[1])
+
+
+m <- felm(quest.code.factualinfo.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m)
+label <- c(label, "Factual \nInformation \nRequest ")
+point <- c(point, m$coef[1])
+lower <- c(lower, (m$coef + qnorm(0.025)*sqrt(diag(m$clustervcv)))[1])
+upper <- c(upper, (m$coef + qnorm(0.975)*sqrt(diag(m$clustervcv)))[1])
+
+
+m <- felm(quest.code.internalpolicy.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m)
+label <- c(label, "Internal \nPolicy \nQuestion ")
+point <- c(point, m$coef[1])
+lower <- c(lower, (m$coef + qnorm(0.025)*sqrt(diag(m$clustervcv)))[1])
+upper <- c(upper, (m$coef + qnorm(0.975)*sqrt(diag(m$clustervcv)))[1])
+
+
+res.transp <- data.frame(point, lower, upper, label)
+
+
+cairo_pdf(width=5*1.62, height=5, file="output/graphs/fig_6.pdf")
+par(mar = c(3.5,5,1,1), mgp=c(2,0.5,0))
+plot(res.transp$point, 1:length(res.transp$point), xlim=c(min(res.transp$lower), max(res.transp$upper)), ylim=c(0.5, (length(res.transp$point)+0.5)), pch=16, yaxt="n", ylab="", xlab="Regression Coefficients", cex=1.5, type="n", axes=F)
+abline(v=0, lwd=4, col="lightgrey")
+abline(h=c(1:length(res.transp$point)), col="lightgrey", lwd=2)
+
+points(res.transp$point, (1:length(res.transp$point)), pch=16, cex=1.75)
+for(i in 1:length(res.transp$point)){
+	lines(c(res.transp$lower[i], res.transp$upper[i]), c(i,i), lwd=4)
+}
+
+axis(2, at=1:length(res.transp$point), res.transp$label, cex.axis=1, las=2)
+axis(1)
+dev.off()
+
+
+
+
+
+################
+### FIGURE 7 ###
+################
+
+
+# Panel (a)
+m1c.did.flex <- felm(rebel ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m1c.did.flex)
+
+out.m1c.did.flex <- output.did.flex(m1c.did.flex)
+out.diff <- output.did.flex.diff(m1c.did.flex)
+
+
+cairo_pdf(width=5, height=5, file="output/graphs/fig_7a.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.m1c.did.flex["pe",], ylim=c(min(out.m1c.did.flex["lower",]), max(out.m1c.did.flex["upper",])), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.m1c.did.flex["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.m1c.did.flex["pe",])){
+	lines(c(i, i), c(out.m1c.did.flex["lower",i], out.m1c.did.flex["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][1,1])*.(out.diff[[2]][1,1])), cex=1.2)
+text(2.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][2,1])*.(out.diff[[2]][2,1])), cex=1.2)
+text(3.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][3,1])*.(out.diff[[2]][3,1])), cex=1.2)
+text(4.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][4,1])*.(out.diff[[2]][4,1])), cex=1.2)
+dev.off()
+
+
+
+
+# Panel (b)
+m1c.did.flex <- felm(present ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==3,])
+summary(m1c.did.flex)
+
+out.m1c.did.flex <- output.did.flex(m1c.did.flex)
+out.diff <- output.did.flex.diff(m1c.did.flex)
+
+cairo_pdf(width=5, height=5, file="output/graphs/fig_7b.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.m1c.did.flex["pe",], ylim=c(min(out.m1c.did.flex["lower",]), max(out.m1c.did.flex["upper",])), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.m1c.did.flex["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.m1c.did.flex["pe",])){
+	lines(c(i, i), c(out.m1c.did.flex["lower",i], out.m1c.did.flex["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][1,1])*.(out.diff[[2]][1,1])), cex=1.2)
+text(2.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][2,1])*.(out.diff[[2]][2,1])), cex=1.2)
+text(3.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][3,1])*.(out.diff[[2]][3,1])), cex=1.2)
+text(4.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][4,1])*.(out.diff[[2]][4,1])), cex=1.2)
+dev.off()
+
+
+
+
+# Panel (c)
+m1c.did.flex <- felm(questcount.log ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m1c.did.flex)
+
+out.m1c.did.flex <- output.did.flex(m1c.did.flex)
+out.diff <- output.did.flex.diff(m1c.did.flex)
+
+cairo_pdf(width=5, height=5, file="output/graphs/fig_7c.pdf")
+par(mar = c(3,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.m1c.did.flex["pe",], ylim=c(min(out.m1c.did.flex["lower",]), max(out.m1c.did.flex["upper",])), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.m1c.did.flex["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.m1c.did.flex["pe",])){
+	lines(c(i, i), c(out.m1c.did.flex["lower",i], out.m1c.did.flex["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][1,1])*.(out.diff[[2]][1,1])), cex=1.2)
+text(2.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][2,1])*.(out.diff[[2]][2,1])), cex=1.2)
+text(3.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][3,1])*.(out.diff[[2]][3,1])), cex=1.2)
+text(4.5, min(out.m1c.did.flex["lower",]), bquote(.(out.diff[[1]][4,1])*.(out.diff[[2]][4,1])), cex=1.2)
+dev.off()
+
+
+
+
+
+
+
+
+################
+### FIGURE 8 ###
+################
+
+
+m3c.flex.job <- felm(questcount.log ~ beforejob.job_director.1000.2 + beforejob.job_director.1000.1 + I(job_director.1000>0) + afterjob.job_director.1000.1 + afterjob.job_director.1000.2 + beforejob.job_board.1000.2 + beforejob.job_board.1000.1 + I(job_board.1000>0) + afterjob.job_board.1000.1 + afterjob.job_board.1000.2 + beforejob.job_consultant.1000.2 + beforejob.job_consultant.1000.1 + I(job_consultant.1000>0) + afterjob.job_consultant.1000.1 + afterjob.job_consultant.1000.2 + beforejob.job_prof.1000.2 + beforejob.job_prof.1000.1 + I(job_prof.1000>0) + afterjob.job_prof.1000.1 + afterjob.job_prof.1000.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m3c.flex.job)
+
+
+out.flex.director <- output.did.flex.job(m3c.flex.job, "job_director.1000")
+out.diff.director <- output.did.flex.job.diff(m3c.flex.job, "job_director.1000")
+
+out.flex.board <- output.did.flex.job(m3c.flex.job, "job_board.1000")
+out.diff.board <- output.did.flex.job.diff(m3c.flex.job, "job_board.1000")
+
+out.flex.consultant <- output.did.flex.job(m3c.flex.job, "job_consultant.1000")
+out.diff.consultant <- output.did.flex.job.diff(m3c.flex.job, "job_consultant.1000")
+
+out.flex.prof <- output.did.flex.job(m3c.flex.job, "job_prof.1000")
+out.diff.prof <- output.did.flex.job.diff(m3c.flex.job, "job_prof.1000")
+
+
+
+ymin <- min(c(out.flex.director["lower",], out.flex.board["lower",], out.flex.consultant["lower",], out.flex.prof["lower",]))
+ymax <- max(c(out.flex.director["upper",], out.flex.board["upper",], out.flex.consultant["upper",], out.flex.prof["upper",]))
+
+
+
+# Panel (a)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8a.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.director["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.director["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.director["pe",])){
+	lines(c(i, i), c(out.flex.director["lower",i], out.flex.director["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.director[[1]][1,1])*.(out.diff.director[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.director[[1]][2,1])*.(out.diff.director[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.director[[1]][3,1])*.(out.diff.director[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.director[[1]][4,1])*.(out.diff.director[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+# Panel (b)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8b.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.board["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.board["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.board["pe",])){
+	lines(c(i, i), c(out.flex.board["lower",i], out.flex.board["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.board[[1]][1,1])*.(out.diff.board[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.board[[1]][2,1])*.(out.diff.board[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.board[[1]][3,1])*.(out.diff.board[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.board[[1]][4,1])*.(out.diff.board[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+# Panel (c)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8c.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.prof["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.prof["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.prof["pe",])){
+	lines(c(i, i), c(out.flex.prof["lower",i], out.flex.prof["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.prof[[1]][1,1])*.(out.diff.prof[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.prof[[1]][2,1])*.(out.diff.prof[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.prof[[1]][3,1])*.(out.diff.prof[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.prof[[1]][4,1])*.(out.diff.prof[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+
+# Panel (d)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8d.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.consultant["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.consultant["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.consultant["pe",])){
+	lines(c(i, i), c(out.flex.consultant["lower",i], out.flex.consultant["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.consultant[[1]][1,1])*.(out.diff.consultant[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.consultant[[1]][2,1])*.(out.diff.consultant[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.consultant[[1]][3,1])*.(out.diff.consultant[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.consultant[[1]][4,1])*.(out.diff.consultant[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+
+
+m3c.flex.ind <- felm(questcount.log ~ beforejob.indcat_health.1000.2 + beforejob.indcat_health.1000.1 + I(indcat_health.1000>0) + afterjob.indcat_health.1000.1 + afterjob.indcat_health.1000.2 + beforejob.indcat_finance.1000.2 + beforejob.indcat_finance.1000.1 + I(indcat_finance.1000>0) + afterjob.indcat_finance.1000.1 + afterjob.indcat_finance.1000.2 + beforejob.indcat_consulting.1000.2 + beforejob.indcat_consulting.1000.1 + I(indcat_consulting.1000>0) + afterjob.indcat_consulting.1000.1 + afterjob.indcat_consulting.1000.2 + beforejob.indcat_knowledge_fp.1000.2 + beforejob.indcat_knowledge_fp.1000.1 + I(indcat_knowledge_fp.1000>0) + afterjob.indcat_knowledge_fp.1000.1 + afterjob.indcat_knowledge_fp.1000.2 + beforejob.indcat_knowledge_nfp.1000.2 + beforejob.indcat_knowledge_nfp.1000.1 + I(indcat_knowledge_nfp.1000>0) + afterjob.indcat_knowledge_nfp.1000.1 + afterjob.indcat_knowledge_nfp.1000.2 + beforejob.indcat_goods.1000.2 + beforejob.indcat_goods.1000.1 + I(indcat_goods.1000>0) + afterjob.indcat_goods.1000.1 + afterjob.indcat_goods.1000.2 + beforejob.indcat_services.1000.2 + beforejob.indcat_services.1000.1 + I(indcat_services.1000>0) + afterjob.indcat_services.1000.1 + afterjob.indcat_services.1000.2 + beforejob.indcat_other.1000.2 + beforejob.indcat_other.1000.1 + I(indcat_other.1000>0) + afterjob.indcat_other.1000.1 + afterjob.indcat_other.1000.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+summary(m3c.flex.ind)
+
+
+out.flex.health <- output.did.flex.job(m3c.flex.ind, "indcat_health.1000")
+out.diff.health <- output.did.flex.job.diff(m3c.flex.ind, "indcat_health.1000")
+
+out.flex.finance <- output.did.flex.job(m3c.flex.ind, "indcat_finance.1000")
+out.diff.finance <- output.did.flex.job.diff(m3c.flex.ind, "indcat_finance.1000")
+
+out.flex.consulting <- output.did.flex.job(m3c.flex.ind, "indcat_consulting.1000")
+out.diff.consulting <- output.did.flex.job.diff(m3c.flex.ind, "indcat_consulting.1000")
+
+out.flex.knowledge_fp <- output.did.flex.job(m3c.flex.ind, "indcat_knowledge_fp.1000")
+out.diff.knowledge_fp <- output.did.flex.job.diff(m3c.flex.ind, "indcat_knowledge_fp.1000")
+
+out.flex.knowledge_nfp <- output.did.flex.job(m3c.flex.ind, "indcat_knowledge_nfp.1000")
+out.diff.knowledge_nfp <- output.did.flex.job.diff(m3c.flex.ind, "indcat_knowledge_nfp.1000")
+
+out.flex.goods <- output.did.flex.job(m3c.flex.ind, "indcat_goods.1000")
+out.diff.goods <- output.did.flex.job.diff(m3c.flex.ind, "indcat_goods.1000")
+
+out.flex.services <- output.did.flex.job(m3c.flex.ind, "indcat_services.1000")
+out.diff.services <- output.did.flex.job.diff(m3c.flex.ind, "indcat_services.1000")
+
+out.flex.other <- output.did.flex.job(m3c.flex.ind, "indcat_other.1000")
+out.diff.other <- output.did.flex.job.diff(m3c.flex.ind, "indcat_other.1000")
+
+
+ymin <- min(c(out.flex.health["lower",], out.flex.finance["lower",], out.flex.consulting["lower",], out.flex.knowledge_fp["lower",], out.flex.knowledge_nfp["lower",], out.flex.goods["lower",], out.flex.services["lower",], out.flex.other["lower",]))
+ymax <- max(c(out.flex.health["upper",], out.flex.finance["upper",], out.flex.consulting["upper",], out.flex.knowledge_fp["upper",], out.flex.knowledge_nfp["upper",], out.flex.goods["upper",], out.flex.services["upper",], out.flex.other["upper",]))
+
+
+
+
+# Panel (e)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8e.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.knowledge_fp["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.knowledge_fp["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.knowledge_fp["pe",])){
+	lines(c(i, i), c(out.flex.knowledge_fp["lower",i], out.flex.knowledge_fp["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.knowledge_fp[[1]][1,1])*.(out.diff.knowledge_fp[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.knowledge_fp[[1]][2,1])*.(out.diff.knowledge_fp[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.knowledge_fp[[1]][3,1])*.(out.diff.knowledge_fp[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.knowledge_fp[[1]][4,1])*.(out.diff.knowledge_fp[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+
+# Panel (f)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8f.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.finance["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.finance["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.finance["pe",])){
+	lines(c(i, i), c(out.flex.finance["lower",i], out.flex.finance["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.finance[[1]][1,1])*.(out.diff.finance[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.finance[[1]][2,1])*.(out.diff.finance[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.finance[[1]][3,1])*.(out.diff.finance[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.finance[[1]][4,1])*.(out.diff.finance[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+# Panel (g)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8g.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.other["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.other["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.other["pe",])){
+	lines(c(i, i), c(out.flex.other["lower",i], out.flex.other["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.other[[1]][1,1])*.(out.diff.other[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.other[[1]][2,1])*.(out.diff.other[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.other[[1]][3,1])*.(out.diff.other[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.other[[1]][4,1])*.(out.diff.other[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+# Panel (h)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8h.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.goods["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.goods["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.goods["pe",])){
+	lines(c(i, i), c(out.flex.goods["lower",i], out.flex.goods["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.goods[[1]][1,1])*.(out.diff.goods[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.goods[[1]][2,1])*.(out.diff.goods[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.goods[[1]][3,1])*.(out.diff.goods[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.goods[[1]][4,1])*.(out.diff.goods[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+
+# Panel (i)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8i.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.health["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.health["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.health["pe",])){
+	lines(c(i, i), c(out.flex.health["lower",i], out.flex.health["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.health[[1]][1,1])*.(out.diff.health[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.health[[1]][2,1])*.(out.diff.health[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.health[[1]][3,1])*.(out.diff.health[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.health[[1]][4,1])*.(out.diff.health[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+# Panel (j)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8j.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.services["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.services["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.services["pe",])){
+	lines(c(i, i), c(out.flex.services["lower",i], out.flex.services["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.services[[1]][1,1])*.(out.diff.services[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.services[[1]][2,1])*.(out.diff.services[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.services[[1]][3,1])*.(out.diff.services[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.services[[1]][4,1])*.(out.diff.services[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+
+# Panel (k)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8k.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.knowledge_nfp["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.knowledge_nfp["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.knowledge_nfp["pe",])){
+	lines(c(i, i), c(out.flex.knowledge_nfp["lower",i], out.flex.knowledge_nfp["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.knowledge_nfp[[1]][1,1])*.(out.diff.knowledge_nfp[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.knowledge_nfp[[1]][2,1])*.(out.diff.knowledge_nfp[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.knowledge_nfp[[1]][3,1])*.(out.diff.knowledge_nfp[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.knowledge_nfp[[1]][4,1])*.(out.diff.knowledge_nfp[[2]][4,1])), cex=1.4)
+dev.off()
+
+
+# Panel (l)
+cairo_pdf(width=5, height=5, file="output/graphs/fig_8l.pdf")
+par(mar = c(2,3,1,1), mgp=c(2,0.5,0))
+plot(1:5, out.flex.consulting["pe",], ylim=c(ymin, ymax), pch=16, cex=2.5, ylab="Coefficient", xlab="", type="n", axes=F)
+abline(h=0, col="gray", lwd=2)
+abline(v=2.5, lty=2, lwd=2, col="gray")
+abline(v=3.5, lty=2, lwd=2, col="gray")
+
+points(1:5, out.flex.consulting["pe",], pch=16, cex=2.5)
+for(i in 1:length(out.flex.consulting["pe",])){
+	lines(c(i, i), c(out.flex.consulting["lower",i], out.flex.consulting["upper",i]), lwd=4)
+}
+axis(2)
+axis(1, at=1:5, labels=c("-2", "-1", "In Job", "1", "2"))
+
+text(1.5, ymin, bquote(.(out.diff.consulting[[1]][1,1])*.(out.diff.consulting[[2]][1,1])), cex=1.4)
+text(2.5, ymin, bquote(.(out.diff.consulting[[1]][2,1])*.(out.diff.consulting[[2]][2,1])), cex=1.4)
+text(3.5, ymin, bquote(.(out.diff.consulting[[1]][3,1])*.(out.diff.consulting[[2]][3,1])), cex=1.4)
+text(4.5, ymin, bquote(.(out.diff.consulting[[1]][4,1])*.(out.diff.consulting[[2]][4,1])), cex=1.4)
+dev.off()
