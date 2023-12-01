@@ -282,21 +282,26 @@ Ministries <- questtopicdata[!(questtopicdata$topic %in% c("Committee on the Ele
                                                            "Committee, Parliamentary Standards Authority",
                                                            "House of Commons Commission",
                                                            "Leader of the House")), ]
-  
+
+# Sorting to only Conservatvies
+
+Ministries <- Ministries[Ministries$con == 1,]
+
 # I need to run many regressions and I will try to automate
 
-# List of ministries
+# Making a list of regression models for each filtered data
 
-m_list <- unique(Ministries$topic)
-
-# Create an empty list to store regression models
+#Defining a list
 regression_models <- list()
 
-# Assuming response_variable and predictor_variables are your actual variable names
+# Grouping the variables (honestly should have done this before)
 response_variable <- "questcount.log"
 predictor_variables <- c("bin.1000", "minister", "minister.state", "undersec", 
                          "frontbench.team", "com.chair", "com.member", "enter", "leave", 
                          "year", "id")
+
+# Making a loop that will make a list of each regression, which I can then extract estimate for bin.1000
+# as well as the standard errors from
 
 for (ministry in m_list) {
   ministry_data <- Ministries[Ministries$topic == ministry, ]
@@ -307,6 +312,7 @@ for (ministry in m_list) {
   
   regression_models[[ministry]] <- model
 }
+
 
 # Now I have this lovely list. time to combine them in a dataframe!
 
