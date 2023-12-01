@@ -1,7 +1,7 @@
 # Installing necessary packages
 
-install.packages(c("ggplot2, dplyr, stargazer, lfe"))
-install.packages("fixest")
+install.packages(c("ggplot2", "dplyr", "stargazer", "lfe", "stringr", "fixest", "modelsummary", "kableExtra"))
+install.packages("tidyverse")
 
 # Load the necessary library
 library(ggplot2)
@@ -12,8 +12,9 @@ library(stringr)
 library(fixest) 
 library(modelsummary)
 library(kableExtra)
+library(tidyverse)
 
-load("C:\\Users\\vmo\\Desktop\\R_filer\\data_mpyear.rda")
+load("C:\\Users\\victo\\Documents\\r-filer\\data_mpyear.rda")
 data
 # Assuming the data is loaded into a variable named 'data'
 # Replace 'data' with the actual name of the data frame in your RDA file
@@ -127,7 +128,7 @@ models <- list(
 headers <- c("Vote Rebellion (Share)", "Vote Participation (Share)", "log(Number of Parliamentary Questions +1)", each = 3)
 
 Tab1 <- combine_models(models, groups = headers)
-  
+
 modelsummary(models, stars = TRUE, statistic = NULL, 
              notes = "All regressions include MP and year fixed-effects, as well the following control variables: entered parliament, left parliament, minister,\n
              minister of state, parliamentary secretary, shadow cabinet, frontbench team, committee chair, and committee member",
@@ -135,7 +136,7 @@ modelsummary(models, stars = TRUE, statistic = NULL,
 
 
 # I cant make it any prettier right now, sorry
-  
+
 #### Figure 2 ####
 
 # Panel A
@@ -152,7 +153,7 @@ f2a_hig <- feols(present ~ bin.1000 + minister + minister.state + undersec + fro
 summary(f2a_hig)
 
 # Calculating confidence intervals. I am quite proud of this
-# Confidence errors calculatted by copying outputs from the summaries above
+# Confidence errors calculated by copying outputs from the summaries above
 
 f2a <- data.frame(param = c("Lowest tercile", "Middle Tercile", "Highest tercile"),
                   low = c(0.013623 - 1.96*0.023317, 0.016679 - 1.96*0.010774, 0.057663 - 1.96*0.019405),
@@ -176,25 +177,25 @@ f2aplot <- ggplot(f2a, aes(x = factor(param, c("Lowest tercile", "Middle Tercile
 
 # Panel C
 
-# Creating the three regressions with vote attendance as independent, and moonlighting (bin 1000) as main dependent.
+# Creating the three regressions with vote attendance as dependent, and moonlighting (bin 1000) as main independent.
 # These regressions are copy-pasted from author
 
-f2c_low <- felm(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==1,])
+f2c_low <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1 & data$dist.tercile.con==1,])
 summary(f2c_low)
 
-f2c_mid <- felm(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==2,])
+f2c_mid <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1 & data$dist.tercile.con==2,])
 summary(f2c_mid)
 
-f2c_hig <- felm(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1 & data$dist.tercile.con==3,])
+f2c_hig <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1 & data$dist.tercile.con==3,])
 summary(f2c_hig)
 
 # Calculating confidence intervals.
 # Confidence errors calculatted by copying outputs from the summaries above
 
 f2c <- data.frame(param = c("Lowest tercile", "Middle Tercile", "Highest tercile"),
-                  low = c(0.039433 - 1.96*0.029469, -4.654e-05 - 1.96*4.366e-02, 0.096598 - 1.96*0.036261),
-                  est = c(0.039433, -4.654e-05, 0.096598),
-                  high = c(0.039433 + 1.96*0.029469, -4.654e-05 + 1.96*4.366e-02, 0.096598 + 1.96*0.036261))
+                  low = c(0.039433 - 1.96*0.029593, -0.000047 - 1.96*0.043846, 0.096598 - 1.96*0.036407),
+                  est = c(0.039433, -0.000047, 0.096598),
+                  high = c(0.039433 + 1.96*0.029593, -0.000047 + 1.96*0.043846, 0.096598 + 1.96*0.036407))
 
 
 f2cplot <- ggplot(f2c, aes(x = factor(param, c("Lowest tercile", "Middle Tercile", "Highest tercile")), y=est)) + 
@@ -219,15 +220,15 @@ f2cplot <- ggplot(f2c, aes(x = factor(param, c("Lowest tercile", "Middle Tercile
 # Effect of employment on asking parliamentary questions. Again copied and renamed from author.
 # However, here we can just use the dummies for the job so it makes constructing the plot a bit easier
 
-f3a_reg <- felm(questcount.log ~ I(job_director.1000>0) + I(job_board.1000>0) + I(job_consultant.1000>0) + I(job_prof.1000>0) + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
+f3a_reg <- feols(questcount.log ~ I(job_director.1000>0) + I(job_board.1000>0) + I(job_consultant.1000>0) + I(job_prof.1000>0) + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
 summary(f3a_reg)
 
-# This method is maybe a bit cumbersome and manual, but it works and I understand it
+# Making a df using a slightly more automated method than copy-pasting
 
 f3a <- data.frame(param = c("Director, Chairman, President or Partner", "Board Member", "Consultant or Advisor" , "Professional Position"),
-                  low = c(0.49916 - 1.96*0.14991, 0.39235 - 1.96*0.17439, 0.15875 - 1.96*0.13225, 0.19427 - 1.96*0.19640),
-                  est = c(0.49916, 0.39235, 0.15875, 0.19427),
-                  high = c(0.49916 + 1.96*0.14991, 0.39235 + 1.96*0.17439, 0.15875 + 1.96*0.13225, 0.19427 + 1.96*0.19640))
+                  low = c(f3a_reg$coefficients[1:4] - (f3a_reg$se[1:4]*1.96)),
+                  est = c(f3a_reg$coefficients[1:4]),
+                  high = c(f3a_reg$coefficients[1:4] + (f3a_reg$se[1:4]*1.96)))
 
 f3aplot <- ggplot(f3a, aes(x = factor(param, c("Director, Chairman, President or Partner", "Board Member", "Consultant or Advisor", "Professional Position")), y=est)) + 
   ggtitle("(a) Effect of private sector employment on Written parliamentary questions
@@ -244,19 +245,17 @@ f3aplot <- ggplot(f3a, aes(x = factor(param, c("Director, Chairman, President or
 
 # First the regression
 
-f3b_reg <- felm(questcount.log ~ I(indcat_health.1000 > 0) + I(indcat_finance.1000 > 0) + I(indcat_consulting.1000 > 0) + I(indcat_knowledge_fp.1000 > 0) + I(indcat_knowledge_nfp.1000 > 0) + I(indcat_goods.1000 > 0) + I(indcat_services.1000 > 0) + I(indcat_other.1000 > 0) + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=data[data$con==1,])
-summary(f3b_reg)
+f3b_reg <- feols(questcount.log ~ I(indcat_health.1000 > 0) + I(indcat_finance.1000 > 0) + I(indcat_consulting.1000 > 0) + I(indcat_knowledge_fp.1000 > 0) + I(indcat_knowledge_nfp.1000 > 0) + I(indcat_goods.1000 > 0) + I(indcat_services.1000 > 0) + I(indcat_other.1000 > 0) + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
+summary(f3b_ols)
 
-# I very much see that my manual method will get increasingly difficult if I continue.
-# So I will try to automate dataframe
+# Making the dataframe for the graph
 
 f3b <- data.frame(param = c("Health ", "Finance ", "Consulting ", "Knowledge,\n for-profit ", 
-                             "Knowledge,\n not-for-profit", "Goods", "Services", "Other"),
-                  low = c(f3b_reg$coef[1:8] - (f3b_reg$cse[1:8]*1.96)),
-                  est = c(f3b_reg$coef[1:8]),
-                  high = c(f3b_reg$coef[1:8] + (f3b_reg$cse[1:8]*1.96)))
+                            "Knowledge,\n not-for-profit", "Goods", "Services", "Other"),
+                  low = c(f3b_reg$coefficients[1:8] - (f3b_reg$se[1:8]*1.96)),
+                  est = c(f3b_reg$coefficients[1:8]),
+                  high = c(f3b_reg$coefficients[1:8] + (f3b_reg$se[1:8]*1.96)))
 
-# I am very pleased with myself for figurring this out
 
 f3bplot <- ggplot(f3b, aes(x = factor(reorder(param, -est)), y=est)) + 
   ggtitle("(a) Effect of private sector employment on Written parliamentary questions
@@ -273,47 +272,57 @@ f3bplot <- ggplot(f3b, aes(x = factor(reorder(param, -est)), y=est)) +
 
 # So this is confusing, because the author has titled his graph somewhat misleadingly.
 # What he is investigating is the effect of moonlighting (bin1000) on the effect of asking questions TO each ministry, not "by ministry"
-# This necessitates a dataframe distinguishing between which ministry the questions were directed at, which the author thankfully provides
+# This necessitates running a seperate FE - regression for questions (log) to each ministry
 
-load("C:\\Users\\vmo\\Desktop\\R_filer\\data_questions_topic.rda")
-Ministries <- unique(questtopicdata$topic)
+load("C:\\Users\\victo\\Documents\\r-filer\\data_questions_topic.rda")
 
 # Now we need to weed out the committees and questions to Leader of the House (he is not a minister)
 
-tpcs <- unique(questtopicdata$topic)
+Ministries <- questtopicdata[!(questtopicdata$topic %in% c("Committee on the Electoral Commission",
+                                                           "Committee, Parliamentary Standards Authority",
+                                                           "House of Commons Commission",
+                                                           "Leader of the House")), ]
+  
+# I need to run many regressions and I will try to automate
 
-# no committees
+# List of ministries
 
-tpcs <- tpcs[tpcs!=c("Committee on the Electoral Commission",
-                     "Committee, Parliamentary Standards Authority",
-                     "House of Commons Commission",
-                     "Leader of the House")]
+m_list <- unique(Ministries$topic)
 
-# Ok so this is listed straight from author. It's complicated, but I understand it. Will ask if we are allowed
+# Create an empty list to store regression models
+regression_models <- list()
 
-for(i in 1:length(tpcs)){
-  tryCatch({	
-    m1 <- felm(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id | 0 | id, data=questtopicdata[questtopicdata$topic==tpcs[i] & questtopicdata$con==1,])
-    points <- c(points, m1$coefficients[1])
-    ses <- c(ses, sqrt(diag(m1$clustervcv))[1])
-    lower <- c(lower, (m1$coefficients+qnorm(0.025)*sqrt(diag(m1$clustervcv)))[1])
-    upper <- c(upper, (m1$coefficients+qnorm(0.975)*sqrt(diag(m1$clustervcv)))[1])
-    topic <- c(topic, tpcs[i])
-  }, error=function(e) {
-    points <- c(points, NA)
-    ses <- c(ses, NA)
-    lower <- c(lower, NA)
-    upper <- c(upper, NA)
-    topic <- c(topic, NA)
-  })
+# Assuming response_variable and predictor_variables are your actual variable names
+response_variable <- "questcount.log"
+predictor_variables <- c("bin.1000", "minister", "minister.state", "undersec", 
+                         "frontbench.team", "com.chair", "com.member", "enter", "leave", 
+                         "year", "id")
+
+for (ministry in m_list) {
+  ministry_data <- Ministries[Ministries$topic == ministry, ]
+
+  formula <- as.formula(paste(response_variable, "~", paste(predictor_variables, collapse = " + ")))
+  
+  model <- feols(formula, data = ministry_data)
+  
+  regression_models[[ministry]] <- model
 }
 
-# Now I have all these lovely lists. time to combine them in a dataframe!
+# Now I have this lovely list. time to combine them in a dataframe!
 
-f4 <- data.frame(param = topic,
-                 low = lower,
-                 est = points,
-                 high = upper)
+param <- names(regression_models)
+std <- sapply(regression_models, function(model) coeftable(model)[2,2])
+est <- sapply(regression_models, function(model) coef(model)["bin.1000"])
+
+# Honestly I should be hired by Harvard, lets go!
+
+f4 <- data.frame(
+  param = param,
+  low = est - std * 1.96,
+  est = est,
+  high = est + std * 1.96
+)
+
 
 # Time to make the graph! Making it vertical and a few tweaks since the list is so large now
 
@@ -328,8 +337,59 @@ f4plot <- ggplot(f4, aes(y = factor(reorder(param, -est)), x=est)) +
   theme_bw() + 
   theme(text = element_text(size=10))
 
-### Figure 5
+### Figure 5 ###
 
-# We need new data again, this time about different characteristics about the Ministries
+# We need new data again, this time about different characteristics about the Ministries. So loading than in
+
+min_charac <- read_csv("C:\\Users\\victo\\Documents\\r-filer\\department_characteristics.csv")
+
+# Renaming and merging in the point estimates
+
+min_charac <- min_charac %>%
+  rename("param" = "topic")
+
+f5 <- right_join(min_charac, f4, by='param')
+
+# So now we need four regressions, using the log of these four columns. F
+
+f5_a <- ggplot(f5, aes(x = log(f5$proc.amount + 1), y = f5$est)) + 
+  ggtitle("Procurement spending") +
+  ylab("Regression estimates for moonlighting") + 
+  xlab("log(Procurement spending in Bn.£ + 1)") +
+  geom_point(size = 2) + 
+  geom_smooth(method = lm) + 
+  theme_minimal () + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
+f5_b <- ggplot(f5, aes(x = log(f5$projects.number + 1), y = f5$est)) + 
+  ggtitle("Number of major projects") +
+  ylab("Regression estimates for moonlighting") + 
+  xlab("log(No. Major projects + 1)") +
+  geom_point(size = 2) + 
+  geom_smooth(method = lm) + 
+  theme_minimal () + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+f5_c <- ggplot(f5, aes(x = log(f5$proc.amount + 1), y = f5$est)) + 
+  ggtitle("Operating Budget, Bn. £") +
+  ylab("Regression estimates for moonlighting") + 
+  xlab("log(Operating Budget, Bn. £ + 1)") +
+  geom_point(size = 2) + 
+  geom_smooth(method = lm) + 
+  theme_minimal () + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+f5_d <- ggplot(f5, aes(x = log(f5$employees+ 1), y = f5$est)) + 
+  ggtitle("Number of employees") +
+  ylab("Regression estimates for moonlighting") + 
+  xlab("log(No. of employees+ 1)") +
+  geom_point(size = 2) + 
+  geom_smooth(method = lm) + 
+  theme_minimal () + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+# NB - This still needs the r-value the author has. Not quite sure how he did it or why, on the
+# to-do list I reckon.
+
+### NB: THe author doesnt actually use the lines other than visually. I think it distracts from the message
