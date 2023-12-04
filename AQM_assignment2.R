@@ -640,6 +640,112 @@ f5_d <- ggplot(f5, aes(x = log(f5$employees+ 1), y = f5$est)) +
 
 ### NB: THe author doesnt actually use the lines other than visually. I think it distracts from the message
 
+### Figure 7 ###
+
+## Panel A ##
+
+# Dummies for lagged and after Treatment (taking a job)
+
+jobs_reg_reg <- feols(rebel ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
+
+jobs_reg <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                         low = c(jobs_reg_reg$coefficients[1:5] - (jobs_reg_reg$se[1:5]*1.96)),
+                         est = c(jobs_reg_reg$coefficients[1:5]),
+                         high = c(jobs_reg_reg$coefficients[1:5] + (jobs_reg_reg$se[1:5]*1.96)))
+
+## Panel B ##
+
+f7b_reg <- feols(present ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1 & data$dist.tercile.con == 3,])
+
+f7b <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(f7b_reg$coefficients[1:5] - (f7b_reg$se[1:5]*1.96)),
+                  est = c(f7b_reg$coefficients[1:5]),
+                  high = c(f7b_reg$coefficients[1:5] + (f7b_reg$se[1:5]*1.96)))
+
+## Panel C ##
+
+f7c_reg <- feols(questcount.log ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
+
+f7c <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(f7c_reg$coefficients[1:5] - (f7c_reg$se[1:5]*1.96)),
+                  est = c(f7c_reg$coefficients[1:5]),
+                  high = c(f7c_reg$coefficients[1:5] + (f7c_reg$se[1:5]*1.96)))
+
+#### Figure 8 ####
+
+# Regression model for job titles
+
+jobs_reg <- feols(questcount.log ~ beforejob.job_director.1000.2 + beforejob.job_director.1000.1 + I(job_director.1000>0) + afterjob.job_director.1000.1 + afterjob.job_director.1000.2 + beforejob.job_board.1000.2 + beforejob.job_board.1000.1 + I(job_board.1000>0) + afterjob.job_board.1000.1 + afterjob.job_board.1000.2 + beforejob.job_consultant.1000.2 + beforejob.job_consultant.1000.1 + I(job_consultant.1000>0) + afterjob.job_consultant.1000.1 + afterjob.job_consultant.1000.2 + beforejob.job_prof.1000.2 + beforejob.job_prof.1000.1 + I(job_prof.1000>0) + afterjob.job_prof.1000.1 + afterjob.job_prof.1000.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
+summary(jobs_reg)
+
+# Regression model for industries
+
+ind_reg <- felm(questcount.log ~ beforejob.indcat_health.1000.2 + beforejob.indcat_health.1000.1 + I(indcat_health.1000>0) + afterjob.indcat_health.1000.1 + afterjob.indcat_health.1000.2 + beforejob.indcat_finance.1000.2 + beforejob.indcat_finance.1000.1 + I(indcat_finance.1000>0) + afterjob.indcat_finance.1000.1 + afterjob.indcat_finance.1000.2 + beforejob.indcat_consulting.1000.2 + beforejob.indcat_consulting.1000.1 + I(indcat_consulting.1000>0) + afterjob.indcat_consulting.1000.1 + afterjob.indcat_consulting.1000.2 + beforejob.indcat_knowledge_fp.1000.2 + beforejob.indcat_knowledge_fp.1000.1 + I(indcat_knowledge_fp.1000>0) + afterjob.indcat_knowledge_fp.1000.1 + afterjob.indcat_knowledge_fp.1000.2 + beforejob.indcat_knowledge_nfp.1000.2 + beforejob.indcat_knowledge_nfp.1000.1 + I(indcat_knowledge_nfp.1000>0) + afterjob.indcat_knowledge_nfp.1000.1 + afterjob.indcat_knowledge_nfp.1000.2 + beforejob.indcat_goods.1000.2 + beforejob.indcat_goods.1000.1 + I(indcat_goods.1000>0) + afterjob.indcat_goods.1000.1 + afterjob.indcat_goods.1000.2 + beforejob.indcat_services.1000.2 + beforejob.indcat_services.1000.1 + I(indcat_services.1000>0) + afterjob.indcat_services.1000.1 + afterjob.indcat_services.1000.2 + beforejob.indcat_other.1000.2 + beforejob.indcat_other.1000.1 + I(indcat_other.1000>0) + afterjob.indcat_other.1000.1 + afterjob.indcat_other.1000.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
+summary(ind_reg)
+
+# Making a lot of models
+
+
+f7a <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(jobs_reg$coefficients[1:5] - (jobs_reg$se[1:5]*1.96)),
+                  est = c(jobs_reg$coefficients[1:5]),
+                  high = c(jobs_reg$coefficients[1:5] + (jobs_reg$se[1:5]*1.96)))
+
+f7b <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(jobs_reg$coefficients[6:10] - (jobs_reg$se[6:10]*1.96)),
+                  est = c(jobs_reg$coefficients[6:10]),
+                  high = c(jobs_reg$coefficients[6:10] + (jobs_reg$se[6:10]*1.96)))
+
+f7c <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(jobs_reg$coefficients[11:15] - (jobs_reg$se[11:15]*1.96)),
+                  est = c(jobs_reg$coefficients[11:15]),
+                  high = c(jobs_reg$coefficients[11:15] + (jobs_reg$se[11:15]*1.96)))
+
+f7d <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(jobs_reg$coefficients[16:20] - (jobs_reg$se[16:20]*1.96)),
+                  est = c(jobs_reg$coefficients[16:20]),
+                  high = c(jobs_reg$coefficients[16:20] + (jobs_reg$se[16:20]*1.96)))
+
+f7e <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(ind_reg$coefficients[1:5] - (ind_reg$se[1:5]*1.96)),
+                  est = c(ind_reg$coefficients[1:5]),
+                  high = c(ind_reg$coefficients[1:5] + (ind_reg$se[1:5]*1.96)))
+
+f7f <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(ind_reg$coefficients[6:10] - (ind_reg$se[6:10]*1.96)),
+                  est = c(ind_reg$coefficients[6:10]),
+                  high = c(ind_reg$coefficients[6:10] + (ind_reg$se[6:10]*1.96)))
+
+f7g <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(ind_reg$coefficients[11:15] - (ind_reg$se[11:15]*1.96)),
+                  est = c(ind_reg$coefficients[11:15]),
+                  high = c(ind_reg$coefficients[11:15] + (ind_reg$se[11:15]*1.96)))
+
+f7h <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(ind_reg$coefficients[16:20] - (ind_reg$se[16:20]*1.96)),
+                  est = c(ind_reg$coefficients[16:20]),
+                  high = c(ind_reg$coefficients[16:20] + (ind_reg$se[16:20]*1.96)))
+
+f7i <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(ind_reg$coefficients[21:25] - (ind_reg$se[21:25]*1.96)),
+                  est = c(ind_reg$coefficients[21:25]),
+                  high = c(ind_reg$coefficients[21:25] + (ind_reg$se[21:25]*1.96)))
+
+f7j <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(ind_reg$coefficients[26:30] - (ind_reg$se[26:30]*1.96)),
+                  est = c(ind_reg$coefficients[26:30]),
+                  high = c(ind_reg$coefficients[26:30] + (ind_reg$se[26:30]*1.96)))
+
+f7k <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(ind_reg$coefficients[31:35] - (ind_reg$se[31:35]*1.96)),
+                  est = c(ind_reg$coefficients[31:35]),
+                  high = c(ind_reg$coefficients[31:35] + (ind_reg$se[31:35]*1.96)))
+
+f7l <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                  low = c(ind_reg$coefficients[36:40] - (ind_reg$se[36:40]*1.96)),
+                  est = c(ind_reg$coefficients[36:40]),
+                  high = c(ind_reg$coefficients[36:40] + (ind_reg$se[36:40]*1.96)))
+              
 ### Playground
 
 # Merging in constituency distance to London for the year 2016
