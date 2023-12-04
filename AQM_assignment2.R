@@ -644,14 +644,10 @@ f5_d <- ggplot(f5, aes(x = log(f5$employees+ 1), y = f5$est)) +
 
 ## Panel A ##
 
-# Dummies for lagged and after Treatment (taking a job)
-
-jobs_reg_reg <- feols(rebel ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
-
-jobs_reg <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
-                         low = c(jobs_reg_reg$coefficients[1:5] - (jobs_reg_reg$se[1:5]*1.96)),
-                         est = c(jobs_reg_reg$coefficients[1:5]),
-                         high = c(jobs_reg_reg$coefficients[1:5] + (jobs_reg_reg$se[1:5]*1.96)))
+f7a <- data.frame(param = c("-2", "-1", "in job", "1", "2"),
+                         low = c(f7a_reg$coefficients[1:5] - (f7a_reg$se[1:5]*1.96)),
+                         est = c(f7a_reg$coefficients[1:5]),
+                         high = c(f7a_reg$coefficients[1:5] + (f7a_reg$se[1:5]*1.96)))
 
 ## Panel B ##
 
