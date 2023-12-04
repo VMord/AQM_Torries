@@ -506,8 +506,6 @@ f3bplot <- ggplot(f3b, aes(x = factor(reorder(param, -est)), y=est)) +
   theme_bw() + 
   theme(text = element_text(size=10))
 
-### Figure 4
-
 # So this is confusing, because the author has titled his graph somewhat misleadingly.
 # What he is investigating is the effect of moonlighting (bin1000) on the effect of asking questions TO each ministry, not "by ministry"
 # This necessitates running a seperate FE - regression for questions (log) to each ministry
@@ -524,6 +522,10 @@ Ministries <- questtopicdata[!(questtopicdata$topic %in% c("Committee on the Ele
 # Sorting to only Conservatvies
 
 Ministries <- Ministries[Ministries$con == 1,]
+
+# Making a list of all the ministries
+
+m_list <- unique(Ministries$topic)
 
 # I need to run many regressions and I will try to automate
 
@@ -543,7 +545,7 @@ predictor_variables <- c("bin.1000", "minister", "minister.state", "undersec",
 
 for (ministry in m_list) {
   ministry_data <- Ministries[Ministries$topic == ministry, ]
-
+  
   formula <- as.formula(paste(response_variable, "~", paste(predictor_variables, collapse = " + ")))
   
   model <- feols(formula, data = ministry_data)
