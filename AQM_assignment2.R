@@ -506,15 +506,20 @@ summary(chips)
 
 # Does it also hold with labour?
 
+# Making the London column for the dataset
+
+data <- data %>%
+  mutate(london = abs(CoL_x - const.x) + abs(CoL_y - const.y))
+
 # Making the terciles
 
 tert_lab <- quantile(data$london[data$lab == 1], c(0:3/3))
 
 data <- data[data$lab == 1,] %>%
   mutate (dist.tercile.lab = cut(london, 
-      tert_lab, 
-      include.lowest = T, 
-      labels = c(1, 2, 3)))
+                                 tert_lab, 
+                                 include.lowest = T, 
+                                 labels = c(1, 2, 3)))
 
 # Running regressions
 
@@ -530,9 +535,9 @@ summary(lab_3)
 # Confidence errors calculated by copying outputs from the summaries above
 
 lab_terciles <- data.frame(param = c("Lowest tercile", "Middle Tercile", "Highest tercile"),
-                  low = c(lab_1$coefficients[1] - 1.96*lab_1$se[1], lab_2$coefficients[1] - 1.96*lab_2$se[1], lab_3$coefficients[1] - 1.96*lab_3$se[1]),
-                  est = c(lab_1$coefficients[1], lab_2$coefficients[1], lab_3$coefficients[1]),
-                  high = c(lab_1$coefficients[1] + 1.96*lab_1$se[1], lab_2$coefficients[1] + 1.96*lab_2$se[1], lab_3$coefficients[1] + 1.96*lab_3$se[1]))
+                           low = c(lab_1$coefficients[1] - 1.96*lab_1$se[1], lab_2$coefficients[1] - 1.96*lab_2$se[1], lab_3$coefficients[1] - 1.96*lab_3$se[1]),
+                           est = c(lab_1$coefficients[1], lab_2$coefficients[1], lab_3$coefficients[1]),
+                           high = c(lab_1$coefficients[1] + 1.96*lab_1$se[1], lab_2$coefficients[1] + 1.96*lab_2$se[1], lab_3$coefficients[1] + 1.96*lab_3$se[1]))
 
 # Making a figure like 2a
 
@@ -545,5 +550,3 @@ extraplot <- ggplot(lab_terciles, aes(x = factor(param, c("Lowest tercile", "Mid
   geom_hline(yintercept=0, color="blue") + 
   theme_bw() + 
   theme(text = element_text(size=10))
-
-
