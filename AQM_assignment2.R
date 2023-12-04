@@ -25,36 +25,34 @@ data
 
 
 #### FIGURE 1 ####
+#### FIGURE 1 ####
 ## Panel a ###
 
 d1_a <- data %>%
   group_by(year) %>%
   summarize(
     sum_all = sum(earnings.all.infl)/1000000,
-    sum_con = sum(if_else(con == 1, earnings.all.infl, 0)/1000000),
-    sum_lab = sum(if_else(lab == 1, earnings.all.infl, 0)/1000000),
-    sum_oth = sum(if_else(oth == 1, earnings.all.infl, 0)/1000000)
-  )
-
-d1_b <- data %>%
-  group_by(year) %>%
-  summarize(
-    sum_all = sum(earnings.all.infl)/1000000,
-    sum_con = sum(if_else(con == 1, earnings.all.infl, 0)/1000000),
-    sum_lab = sum(if_else(lab == 1, earnings.all.infl, 0)/1000000),
-    sum_oth = sum(if_else(oth == 1, earnings.all.infl, 0)/1000000)
-  )
-
+    sum_con = sum(earnings.all.infl[con == 1]/1000000),
+    sum_lab = sum(earnings.all.infl[lab == 1]/1000000),
+    sum_oth = sum(earnings.all.infl[oth == 1]/1000000))
 
 # Create the plot
-ggplot(d1_a, aes(x = year)) +
-  geom_line(aes(y = sum_all, group = 1), linetype = "solid", lwd=1) +
-  geom_line(aes(y = sum_con, group = 1), linetype = "dashed", lwd=1) +
-  geom_line(aes(y = sum_lab, group = 1), linetype = "dotdash", lwd=1) +
-  geom_line(aes(y = sum_oth, group = 1), linetype = "dotted", lwd=1) +
+
+d1_a_f <- ggplot(d1_a, aes(x = year)) +
+  geom_line(aes(y = sum_all), linetype = "solid", lwd=1) +
+  geom_line(aes(y = sum_con), linetype = "dashed", lwd=1) +
+  geom_line(aes(y = sum_lab), linetype = "dotdash", lwd=1) +
+  geom_line(aes(y = sum_oth), linetype = "dotted", lwd=1) +
+  geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_all[d1_a$year == max(d1_a$year)]), 
+            aes(label = "All", x = year, y = y), hjust = 1.4, vjust = 0) +
+  geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_con[d1_a$year == median(d1_a$year)]), 
+            aes(label = "Con", x = year, y = y), hjust = 1.4, vjust = -0.5) +
+  geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_lab[d1_a$year == median(d1_a$year)]), 
+            aes(label = "Lab", x = year, y = y), hjust = 1.4, vjust = -1.5) +
+  geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_oth[d1_a$year == max(d1_a$year)]), 
+            aes(label = "Oth", x = year, y = y), hjust = 1.4, vjust = 0) +
   theme_minimal() +
-  labs(x = "Year", y = "Total Earnings in Million £") +
-  labs(x = "Year", y = "Total Earnings in Million £") +
+  labs(x = "Year", y = "Total Earnings in Million £", title = "(a) Total Sector Private Earnings") +
   theme(
     legend.position = "none",
     axis.text.x = element_text(angle = 90, hjust = 1)
@@ -62,11 +60,191 @@ ggplot(d1_a, aes(x = year)) +
   geom_vline(xintercept = c(2010, 2015), color = "grey", linetype = "dashed", size = 1) +
   geom_hline(yintercept = 0, color = "grey", linetype = "solid", size = 1) +
   scale_x_continuous(breaks = unique(data$year)) + 
-  scale_y_continuous(limits = c(0, 7)) + 
+  scale_y_continuous(limits = c(0, 7), breaks = c(0, 1, 2, 3, 4, 5, 6, 7)) + 
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
-        axis.text.x = element_text(angle = 360)) + 
-  theme(axis.line.x = element_line(color="grey", size = 0.5),
-        axis.line.y = element_line(color="grey", size = 0.5))
+        axis.text.x = element_text(angle = 360), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 8),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 90),
+        axis.title.y = element_text(size = 8),
+        plot.title = element_text(face = "bold", color = "black", size = 8))
+  
+
+### Panel b ###
+d1_b <- data %>%
+  group_by(year) %>%
+  summarize(
+    share_all = sum(earnings.all.infl>1000)/sum(earnings.all.infl>=0),
+    share_con = sum(if_else(con == 1, earnings.all.infl, 0)>1000)/
+      sum(if_else(con == 1, earnings.all.infl, -1)>=0),
+    share_lab = sum(if_else(lab == 1, earnings.all.infl, 0)>1000)/
+      sum(if_else(lab == 1, earnings.all.infl, -1)>=0),
+    share_oth = sum(if_else(oth == 1, earnings.all.infl, 0)>1000)/
+      sum(if_else(oth == 1, earnings.all.infl, -1)>=0
+      ))
+
+#Create the plot 
+d1_b_f <- ggplot(d1_b, aes(x = year)) +
+  geom_line(aes(y = share_all, group = 1), linetype = "solid", lwd=1) +
+  geom_line(aes(y = share_con, group = 1), linetype = "dashed", lwd=1) +
+  geom_line(aes(y = share_lab, group = 1), linetype = "dotdash", lwd=1) +
+  geom_line(aes(y = share_oth, group = 1), linetype = "dotted", lwd=1) +
+  geom_text(data = data.frame(year = median(d1_b$year), y = d1_b$share_all[d1_a$year == max(d1_b$year)]), 
+            aes(label = "All", x = year, y = y), hjust = 1.4, vjust = 0) +
+  geom_text(data = data.frame(year = median(d1_b$year), y = d1_b$share_con[d1_a$year == max(d1_b$year)]), 
+            aes(label = "Con", x = year, y = y), hjust = 1, vjust = -0.5) +
+  geom_text(data = data.frame(year = median(d1_b$year), y = d1_b$share_lab[d1_a$year == min(d1_b$year)]), 
+            aes(label = "Lab", x = year, y = y), hjust = 1.4, vjust = 0) +
+  geom_text(data = data.frame(year = median(d1_b$year), y = d1_b$share_oth[d1_a$year == max(d1_b$year)]), 
+            aes(label = "Oth", x = year, y = y), hjust = 1.4, vjust = 0) +
+  theme_minimal() +
+  labs(x = "Year", y = "Share of MPs with Outside Income", title = "(b) Share of MPs with Private Sector \n Earnings ≥ 1000") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 90, hjust = 1)
+  ) +
+  geom_vline(xintercept = c(2010, 2015), color = "grey", linetype = "dashed", size = 1) +
+  geom_hline(yintercept = 0, color = "grey", linetype = "solid", size = 1) +
+  scale_x_continuous(breaks = unique(data$year)) + 
+  scale_y_continuous(limits = c(0, 0.32), breaks = c(0.05, 0.10, 0.15, 0.20, 0.25, 0.30)) + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 8),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 90),
+        axis.title.y = element_text(size = 8),
+        plot.title = element_text(face = "bold", color = "black", size = 8))
+
+### Panel c ###
+
+d1_c <- data %>%
+  filter(earnings.all.infl > 0) %>%
+  group_by(year) %>%
+  summarize(mean_nonull_all = mean(earnings.all.infl),
+    mean_nonull_con = mean(earnings.all.infl[con == 1]),
+    mean_nonull_lab = mean(earnings.all.infl[lab == 1]),
+    mean_nonull_oth = mean(earnings.all.infl[oth == 1]
+            ))
+
+#create the plot
+d1_c_f <- ggplot(d1_c, aes(x = year)) +
+  geom_line(aes(y = mean_nonull_all), linetype = "solid", lwd=1) +
+  geom_line(aes(y = mean_nonull_con), linetype = "dashed", lwd=1) +
+  geom_line(aes(y = mean_nonull_lab), linetype = "dotdash", lwd=1) +
+  geom_line(aes(y = mean_nonull_oth), linetype = "dotted", lwd=1) +
+  geom_text(data = data.frame(year = median(d1_c$year), y = d1_c$mean_nonull_all[d1_a$year == median(d1_c$year)]), 
+            aes(label = "All", x = year, y = y), hjust = -1, vjust = -1.5) +
+  geom_text(data = data.frame(year = median(d1_c$year), y = d1_c$mean_nonull_con[d1_a$year == median(d1_c$year)]), 
+            aes(label = "Con", x = year, y = y), hjust = -0.8, vjust = -4) +
+  geom_text(data = data.frame(year = median(d1_c$year), y = d1_c$mean_nonull_lab[d1_a$year == median(d1_c$year)]), 
+            aes(label = "Lab", x = year, y = y), hjust = -0.8, vjust = 1) +
+  geom_text(data = data.frame(year = median(d1_c$year), y = d1_c$mean_nonull_oth[d1_a$year == median(d1_c$year)]), 
+            aes(label = "Oth", x = year, y = y), hjust = 1.4, vjust = -0.5) + 
+  theme_minimal() +
+  labs(x = "Year", y = "Mean Annual Earnings in £", title = "(c) Mean Earnings of MPs with Jobs") +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 0, hjust = 1)
+  ) +
+  geom_vline(xintercept = c(2010, 2015), color = "grey", linetype = "dashed", size = 1) +
+  geom_hline(yintercept = 0, color = "grey", linetype = "solid", size = 1) +
+  scale_x_continuous(breaks = unique(data$year)) + 
+  scale_y_continuous(limits = c(0, 55000), breaks = c(0, 10000, 20000, 30000, 40000, 50000)) + 
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 8),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 90),
+        axis.title.y = element_text(size = 8),
+        plot.title = element_text(face = "bold", color = "black", size = 8))
+
+### Panel d ###
+d1_d <- data %>%
+  summarise(
+    sum_director = sum(job_director),
+    sum_prof = sum(job_prof),
+    sum_consultant = sum(job_consultant),
+    sum_board = sum(job_board)
+  ) %>%
+  pivot_longer(cols = everything(), names_to = "job", values_to = "n") %>%
+  mutate(proportion = n / sum(n))
+
+
+d1_d_f <- ggplot(d1_d, aes(y = proportion, x = fct_reorder(job, proportion))) + 
+  geom_col(color = "grey", fill = "grey") + 
+  coord_flip() + 
+  theme_minimal() +
+  labs(x = "", y = "Share", title = "(d) Employment: Share of Job Titles (MP-Years)") +
+  scale_x_discrete(labels = c("sum_director" = "Director,\nChairman,\nPresident,\nPartner", 
+                              "sum_consultant"="Consultant,\nAdvisor", 
+                              "sum_board"="Board\nMember",
+                              "sum_prof"="Professional\nPosition")) + 
+  scale_y_continuous(limits = c(0, 0.40), breaks = c(0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35)) +
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.line.y = element_line(color="grey", size = 0.3), 
+        plot.title = element_text(face = "bold", color = "black", size = 8),
+        axis.title.x = element_text(size = 8))
+
+
+### Panel e ###  
+d1_e <- data %>%
+  summarise(
+    sum_health = sum(indcat_health),
+    sum_finance = sum(indcat_finance),
+    sum_consulting = sum(indcat_consulting),
+    sum_knowledge_profit = sum(indcat_knowledge_fp),
+    sum_knowledge_noprofit = sum(indcat_knowledge_nfp),
+    sum_goods = sum(indcat_goods),
+    sum_services = sum(indcat_services), 
+    sum_other = sum(indcat_other)
+  ) %>%
+  pivot_longer(cols = everything(), names_to = "job", values_to = "n") %>%
+  mutate(proportion = n / sum(n))
+
+
+
+d1_e_f <- ggplot(d1_e, aes(y = proportion, x = fct_relevel(fct_reorder(job, proportion), 'sum_other'))) + 
+  geom_col(color = "grey", fill = "grey") + 
+  coord_flip() +
+  theme_minimal() +
+  labs(x = "", y = "Share", title = "(e) Employment: Share in Different Industries \n(MP-Years)") +
+  scale_x_discrete(labels = c("sum_goods" = "Goods",
+                              "sum_knowledge_profit" ="Knowledge,\nfor-profit",
+                              "sum_consulting"= "Consulting", 
+                              "sum_finance" = "Finance", 
+                              "sum_services" = "Services",
+                              "sum_knowledge_noprofit" = "Knowledge,\nnot-for-profit",
+                              "sum_health" = "Health", 
+                              "sum_other" = "Other")) +
+  scale_y_continuous(limits = c(0, 0.25), breaks = c(0, 0.05, 0.10, 0.15, 0.20)) +
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.line.y = element_line(color="grey", size = 0.3), 
+        plot.title = element_text(face = "bold", color = "black", size = 8),
+        axis.title.x = element_text(size = 8))
+
+
+
+grid.arrange(
+  d1_a_f, d1_b_f, d1_c_f, 
+  d1_d_f, d1_e_f,
+  layout_matrix = rbind(c(1, 1, 2, 2, 3, 3),
+                        c(4, 4, 4, 5, 5, 5)), 
+  top=text_grob("FIGURE 1 Private Sector Earnings of Members of the House of Commons, 2010-2016", 
+               size = 15, face = "bold", hjust = 0.7, lineheight = 2))
+
+fig_1 <- arrangeGrob(
+  d1_a_f, d1_b_f, d1_c_f, 
+  d1_d_f, d1_e_f,
+  layout_matrix = rbind(c(1, 1, 2, 2, 3, 3),
+                        c(4, 4, 4, 5, 5, 5)), 
+  top=text_grob("FIGURE 1 Private Sector Earnings of Members of the House of Commons, 2010-2016", 
+                size = 15, face = "bold", hjust = 0.7, lineheight = 2))
+
+ggsave(file="fig_1_assignment2.pdf", fig_1)
+
 
 #### Table 1 ####
 
