@@ -697,6 +697,34 @@ fig_5 <- grid.arrange(
 
 ggsave(file="fig_5_assignment2.pdf", fig_5)
 
+#### Figure 6 ####
+
+# Running all regressions
+
+a6 <- feols(quest.code.internalpolicy.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
+b6 <- feols(quest.code.factualinfo.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
+c6 <- feols(quest.code.timing.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
+d6 <- feols(quest.code.urgingaction.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
+
+# Combining a list
+
+f6_list <- list(a6 = a6, b6 = b6, c6 = c6, d6 = d6)
+
+# Getting estimates and upper-lower bounds
+
+param <- c("int policy", "fac.info", "timing", "urge_action")
+std <- sapply(f6_list, function(model) se(model)[1])
+est <- sapply(f6_list, function(model) coef(model)[1])
+
+# Combining lists into a df for the model
+
+f6 <- data.frame(
+  param = param,
+  low = est - std * 1.96,
+  est = est,
+  high = est + std * 1.96
+)
+
 #### FIGURE 7 ####
 
 ## Panel A ##
