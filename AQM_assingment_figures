@@ -1,3 +1,9 @@
+# Installing necessary packages
+
+install.packages(c("ggplot2", "dplyr", "tidyr", "sjPlot", "gridExtra", "cowplot", "ggpubr", 
+                   "forcats", "lfe", "stringr", "fixest", "modelsummary", "kableExtra", 
+                   "tidyverse", "maps", "mapproj", "grid", "ggpp", "ggpmisc"))
+
 # Load the necessary library
 library(ggplot2)
 library(dplyr)
