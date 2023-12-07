@@ -1,0 +1,82 @@
+#### Our extension ####
+
+### Labour terciles ###
+
+# Labour test
+
+# Does it also hold with labour?
+
+# Making the London column for the dataset
+
+data <- data %>%
+  mutate(london = abs(CoL_x - const.x) + abs(CoL_y - const.y))
+
+# Making the terciles
+
+tert_lab <- quantile(data$london[data$lab == 1], c(0:3/3))
+
+data <- data[data$lab == 1,] %>%
+  mutate (dist.tercile.lab = cut(london, 
+                                 tert_lab, 
+                                 include.lowest = T, 
+                                 labels = c(1, 2, 3)))
+
+# Running regressions
+
+lab_1 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==1,])
+summary(lab_1)
+
+lab_2 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==2,])
+summary(lab_2)
+
+lab_3 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==3,])
+summary(lab_3)
+
+### Improved con map ###
+
+# Trying to improve map by:
+# Making non-moonligther points more transparent
+# Making an area of London, and colouring points where arrows terminate in London
+# Changing color of arrows depending on distance to London
+
+# Getting coordinates for City of London and saving them
+
+CoL_y <- 51.51279 
+CoL_x <- -0.09184
+
+# Merging these into the locdata by taking the difference between x and y, and then adding those together
+
+locdata$london.x <- abs(CoL_x - locdata$employ.x)
+locdata$london.y <- abs(CoL_y - locdata$employ.y)
+locdata$london <- locdata$london.x + locdata$london.y
+
+
+UK_map_2 <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
+  geom_polygon(fill = "white", colour = "black") +
+  coord_map(ylim = c(50, 55.5)) +
+  geom_point(data = data[data$dist.tercile.con == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
+  geom_point(data = locdata[locdata$dist.tercile.con == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
+  geom_segment(data = locdata[locdata$dist.tercile.con == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
+               arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
+  scale_color_gradient(low = "darkblue", high = "lightblue") +
+  theme_void() + 
+  theme(legend.position = "none")
+
+### Improved Labour map ###
+
+# Adding labour terciles to locdata
+
+locdata <- left_join(locdata, select(data, id, dist.tercile.lab), by = "id")
+
+# The map
+
+UK_map_3 <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
+  geom_polygon(fill = "white", colour = "black") +
+  coord_map(ylim = c(50, 55.5)) +
+  geom_point(data = data[data$dist.tercile.lab == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
+  geom_point(data = locdata[locdata$dist.tercile.lab == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
+  geom_segment(data = locdata[locdata$dist.tercile.lab == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
+               arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
+  scale_color_gradient(low = "red", high = "yellow") +
+  theme_void() + 
+  theme(legend.position = "none")
