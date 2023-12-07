@@ -11,7 +11,7 @@
 data <- data %>%
   mutate(london = abs(CoL_x - const.x) + abs(CoL_y - const.y))
 
-# Making the terciles
+# Making the terciles for labour
 
 tert_lab <- quantile(data$london[data$lab == 1], c(0:3/3))
 
@@ -20,6 +20,17 @@ data <- data[data$lab == 1,] %>%
                                  tert_lab, 
                                  include.lowest = T, 
                                  labels = c(1, 2, 3)))
+
+# Making terciles for everyone but conservatives
+
+tert_ncon <- quantile(data$london[data$lab == 1 | data$oth == 1], c(0:3/3))
+
+data <- data [data$lab == 1 | data$oth == 1,] %>%
+  mutate (dist.tercile.ncon = cut(london, 
+                                 tert_ncon, 
+                                 include.lowest = T, 
+                                 labels = c(1, 2, 3)))
+
 
 # Running regressions
 
@@ -76,6 +87,25 @@ UK_map_3 <- ggplot(data = UK, aes(x = long, y = lat, group = group)) +
   geom_point(data = data[data$dist.tercile.lab == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
   geom_point(data = locdata[locdata$dist.tercile.lab == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
   geom_segment(data = locdata[locdata$dist.tercile.lab == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
+               arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
+  scale_color_gradient(low = "red", high = "yellow") +
+  theme_void() + 
+  theme(legend.position = "none")
+
+### Improved other map
+
+# Adding ncon terciles to locdata
+
+locdata <- left_join(locdata, select(data, id, dist.tercile.ncon), by = "id")
+
+# The map
+
+UK_map_4 <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
+  geom_polygon(fill = "white", colour = "black") +
+  coord_map(ylim = c(50, 55.5)) +
+  geom_point(data = data[data$dist.tercile.ncon == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
+  geom_point(data = locdata[locdata$dist.tercile.ncon.x == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
+  geom_segment(data = locdata[locdata$dist.tercile.ncon.x == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
                arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
   scale_color_gradient(low = "red", high = "yellow") +
   theme_void() + 
