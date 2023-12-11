@@ -1,4 +1,4 @@
-#### Creating distance terciles for labour an all, as well as a plot point for London ####
+#### Creating distance terciles for labour and labour + other all, as well as a plot point for London ####
 
 # Getting coordinates for City of London and saving them
 
@@ -23,20 +23,17 @@ tert_lab <- quantile(data$london[data$lab == 1], c(0:3/3))
 data <- data %>%
   mutate(dist.tercile.lab = ifelse(lab == 1, cut(london, tert_lab, include.lowest = TRUE, labels = c(1, 2, 3)), NA))
 
-### Making terciles for All with regard to distance to London
+### Making terciles for labour and others (ncon) with regard to distance to London
 
-tert_all <- quantile(data$london, c(0:3/3))
+tert_ncon <- quantile(data$london[data$con == 0], c(0:3/3))
 
 data <- data %>%
-  mutate (dist.tercile.all = cut(london, 
-                                 tert_all, 
-                                 include.lowest = T, 
-                                 labels = c(1, 2, 3)))
+  mutate(dist.tercile.ncon = ifelse(con == 0, cut(london, tert_ncon, include.lowest = TRUE, labels = c(1, 2, 3)), NA))
 
 ### Merging these into locdata
 
 id_terts <- data %>%
-  select(id, dist.tercile.lab, dist.tercile.all)
+  select(id, dist.tercile.lab, dist.tercile.ncon)
 
 id_terts <- id_terts %>%
   distinct(id, .keep_all = TRUE)
@@ -51,13 +48,13 @@ locdata <- left_join(locdata, id_terts, by = "id")
 
 # Running regressions
 
-lab_1 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==1,])
+lab_1 <- feols(present ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==1,])
 summary(lab_1)
 
-lab_2 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==2,])
+lab_2 <- feols(present ~ bin.1000+ frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==2,])
 summary(lab_2)
 
-lab_3 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==3,])
+lab_3 <- feols(present ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==3,])
 summary(lab_3)
 
 # Confidence errors calculated by copying outputs from the summaries above
@@ -81,26 +78,26 @@ d2_lab_f <- ggplot(lab_terciles, aes(x = factor(param, c("Lowest Tercile", "Midd
 
 ### All ###
 
-all_1 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==1,])
+ncon_1 <- feols(present ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.ncon==1,])
 summary(lab_1)
 
-all_2 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==2,])
+ncon_2 <- feols(present ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.ncon==2,])
 summary(lab_2)
 
-all_3 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==3,])
+ncon_3 <- feols(present ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.ncon==3,])
 summary(lab_3)
 
 # Confidence errors calculated by copying outputs from the summaries above
 
-all_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
-                           low = c(all_1$coefficients[1] - 1.96*all_1$se[1], all_2$coefficients[1] - 1.96*all_2$se[1], all_3$coefficients[1] - 1.96*all_3$se[1]),
-                           est = c(all_1$coefficients[1], all_2$coefficients[1], all_3$coefficients[1]),
-                           high = c(all_1$coefficients[1] + 1.96*all_1$se[1], all_2$coefficients[1] + 1.96*all_2$se[1], all_3$coefficients[1] + 1.96*all_3$se[1]))
+ncon_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
+                           low = c(ncon_1$coefficients[1] - 1.96*ncon_1$se[1], ncon_2$coefficients[1] - 1.96*ncon_2$se[1], ncon_3$coefficients[1] - 1.96*ncon_3$se[1]),
+                           est = c(ncon_1$coefficients[1], ncon_2$coefficients[1], ncon_3$coefficients[1]),
+                           high = c(ncon_1$coefficients[1] + 1.96*ncon_1$se[1], ncon_2$coefficients[1] + 1.96*ncon_2$se[1], ncon_3$coefficients[1] + 1.96*ncon_3$se[1]))
 
 # Making a figure like 2a
 
-d2_all_f <- ggplot(all_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
-  ggtitle("(a) Effect of Moonlighting on Vote Attendance.\n By constituency distance to London as the crow flies, all MPs") + 
+d2_ncon_f <- ggplot(ncon_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
+  ggtitle("(a) Effect of Moonlighting on Vote Attendance.\n By constituency distance to London as the crow flies, all non-Conservative MPs") + 
   geom_pointrange(aes(ymax = high, ymin = low), color = "darkgreen") + 
   scale_x_discrete("") + 
   scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
@@ -149,14 +146,14 @@ UK_map_lab <- ggplot(data = UK, aes(x = long, y = lat, group = group)) +
   theme_void() + 
   theme(legend.position = "none")
 
-#### Map 2b for All ####
+#### Map 2b for nCon ####
 
-UK_map_all <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
+UK_map_ncon <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
   geom_polygon(fill = "white", colour = "black") +
   coord_map(ylim = c(50, 59)) +
-  geom_point(data = data[data$dist.tercile.all == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
-  geom_point(data = locdata[locdata$dist.tercile.all == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
-  geom_segment(data = locdata[locdata$dist.tercile.all == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
+  geom_point(data = data[data$dist.tercile.ncon == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
+  geom_point(data = locdata[locdata$dist.tercile.ncon == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
+  geom_segment(data = locdata[locdata$dist.tercile.ncon == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
                arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
   scale_color_gradient(low = "darkgreen", high = "lightgreen") +
   theme_void() + 
@@ -166,14 +163,14 @@ UK_map_all <- ggplot(data = UK, aes(x = long, y = lat, group = group)) +
 
 # Running regressions
 
-clab_1 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==1,])
-summary(lab_1)
+clab_1 <- feols(expense.accomodation.rent.bin ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==1,])
+summary(clab_1)
 
-clab_2 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==2,])
-summary(lab_2)
+clab_2 <- feols(expense.accomodation.rent.bin ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==2,])
+summary(clab_2)
 
-clab_3 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==3,])
-summary(lab_3)
+clab_3 <- feols(expense.accomodation.rent.bin ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==3,])
+summary(clab_3)
 
 # Confidence errors calculated by copying outputs from the summaries above
 
@@ -185,7 +182,7 @@ clab_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highe
 # Making a figure like 2c
 
 d2_clab_f <- ggplot(clab_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
-  ggtitle("(a) Effect of Moonlighting on Probability of claiming London Allowanc.\n By constituency distance to London as the crow flies, only Labour MPs") + 
+  ggtitle("(a) Effect of Moonlighting on Probability of claiming London Allowance.\n By constituency distance to London as the crow flies, only Labour MPs") + 
   geom_pointrange(aes(ymax = high, ymin = low), color = "darkred") + 
   scale_x_discrete("") + 
   scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
@@ -196,13 +193,13 @@ d2_clab_f <- ggplot(clab_terciles, aes(x = factor(param, c("Lowest Tercile", "Mi
 
 ### All ###
 
-call_1 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==1,])
+call_1 <- feols(expense.accomodation.rent.bin ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.ncon==1,])
 summary(lab_1)
 
-call_2 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==2,])
+call_2 <- feols(expense.accomodation.rent.bin ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.ncon==2,])
 summary(lab_2)
 
-call_3 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==3,])
+call_3 <- feols(expense.accomodation.rent.bin ~ bin.1000 + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.ncon==3,])
 summary(lab_3)
 
 # Confidence errors calculated by copying outputs from the summaries above
