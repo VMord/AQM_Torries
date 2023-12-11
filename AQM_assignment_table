@@ -9,12 +9,12 @@ summary(t1ra)
 
 # Conservatives
 
-t1rc <- feols(rebel ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
+t1rc <- feols(rebel ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave| year + id, cluster = ~ id, data=data[data$con==1,])
 summary(t1rc)
 
 # Labour
 
-t1rl <- feols(rebel ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1,])
+t1rl <- feols(rebel ~ bin.1000 + shadow.cabinet + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1,])
 summary(t1rl)
 
 ## Vote participation ##
@@ -26,12 +26,12 @@ summary(t1pa)
 
 # Conservative
 
-t1pc <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
+t1pc <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
 summary(t1pc)
 
 # Labour
 
-t1pl <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1,])
+t1pl <- feols(present ~ bin.1000 + shadow.cabinet + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1,])
 summary(t1pl)
 
 ## Number of parliamentary questions (q) log ##
@@ -39,10 +39,10 @@ summary(t1pl)
 t1qa <- feols(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data)
 summary(t1qa)
 
-t1qc <- feols(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
+t1qc <- feols(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
 summary(t1qc)
 
-t1ql <- feols(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1,])
+t1ql <- feols(questcount.log ~ bin.1000 + bin.1000 + shadow.cabinet + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1,])
 summary(t1ql)
 
 # Making an output for the regression results
@@ -52,8 +52,8 @@ models <- list(
   "Conservative" = t1rc,
   "Labour" = t1rl,
   "All" = t1pa,
-  "Conservative" = t1rc,
-  "Labour" = t1rl,
+  "Conservative" = t1pc,
+  "Labour" = t1pl,
   "All" = t1qa,
   "Conservative" = t1qc,
   "Labour" = t1ql
@@ -61,9 +61,7 @@ models <- list(
 
 headers <- c("Vote Rebellion (Share)", "Vote Participation (Share)", "log(Number of Parliamentary Questions +1)", each = 3)
 
-Tab1 <- combine_models(models, groups = headers)
-
-modelsummary(models, stars = TRUE, statistic = NULL, 
+modelsummary(models, stars = TRUE, statistic = NULL, fmt_decimal(digits = 3, pdigits = NULL),
              notes = "All regressions include MP and year fixed-effects, as well the following control variables: entered parliament, left parliament, minister,\n
              minister of state, parliamentary secretary, shadow cabinet, frontbench team, committee chair, and committee member",
              output = "latex")
