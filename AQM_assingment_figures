@@ -296,7 +296,7 @@ d2_a_f <- ggplot(d2_a, aes(y = factor(param, c("Highest Tercile", "Middle Tercil
 
 load("/Users/thomaspadkjaer/Downloads/employment_coords.rda")
 
-locdata <- locdata[locdata$foreign,]
+locdata <- locdata[locdata$foreign == 0,]
 
 # I need to include a "group" variable to make the map work, just 1
 
