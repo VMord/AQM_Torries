@@ -1,54 +1,4 @@
-#### Our extension ####
-
-### Labour terciles ###
-
-# Labour test
-
-# Does it also hold with labour?
-
-# Making the London column for the dataset
-
-data <- data %>%
-  mutate(london = abs(CoL_x - const.x) + abs(CoL_y - const.y))
-
-# Making the terciles for labour
-
-tert_lab <- quantile(data$london[data$lab == 1], c(0:3/3))
-
-data <- data[data$lab == 1,] %>%
-  mutate (dist.tercile.lab = cut(london, 
-                                 tert_lab, 
-                                 include.lowest = T, 
-                                 labels = c(1, 2, 3)))
-
-# Making terciles for everyone but conservatives
-
-tert_ncon <- quantile(data$london[data$lab == 1 | data$oth == 1], c(0:3/3))
-
-data <- data [data$lab == 1 | data$oth == 1,] %>%
-  mutate (dist.tercile.ncon = cut(london, 
-                                 tert_ncon, 
-                                 include.lowest = T, 
-                                 labels = c(1, 2, 3)))
-
-
-# Running regressions
-
-lab_1 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==1,])
-summary(lab_1)
-
-lab_2 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==2,])
-summary(lab_2)
-
-lab_3 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==3,])
-summary(lab_3)
-
-### Improved con map ###
-
-# Trying to improve map by:
-# Making non-moonligther points more transparent
-# Making an area of London, and colouring points where arrows terminate in London
-# Changing color of arrows depending on distance to London
+#### Creating distance terciles for labour an all, as well as a plot point for London ####
 
 # Getting coordinates for City of London and saving them
 
@@ -61,29 +11,136 @@ locdata$london.x <- abs(CoL_x - locdata$employ.x)
 locdata$london.y <- abs(CoL_y - locdata$employ.y)
 locdata$london <- locdata$london.x + locdata$london.y
 
+# Merging these facts into the main dataframe
 
-UK_map_2 <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
+data <- data %>%
+  mutate(london = abs(CoL_x - const.x) + abs(CoL_y - const.y))
+
+### Making terciles for Labour with regard to distance to London
+
+tert_lab <- quantile(data$london[data$lab == 1], c(0:3/3))
+
+data <- data %>%
+  mutate(dist.tercile.lab = ifelse(lab == 1, cut(london, tert_lab, include.lowest = TRUE, labels = c(1, 2, 3)), NA))
+
+### Making terciles for All with regard to distance to London
+
+tert_all <- quantile(data$london, c(0:3/3))
+
+data <- data %>%
+  mutate (dist.tercile.all = cut(london, 
+                                 tert_all, 
+                                 include.lowest = T, 
+                                 labels = c(1, 2, 3)))
+
+### Merging these into locdata
+
+id_terts <- data %>%
+  select(id, dist.tercile.lab, dist.tercile.all)
+
+id_terts <- id_terts %>%
+  distinct(id, .keep_all = TRUE)
+
+locdata$id <- as.numeric(locdata$id)
+
+locdata <- left_join(locdata, id_terts, by = "id")
+
+#### Figure 2a ####
+
+### Labour ###
+
+# Running regressions
+
+lab_1 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==1,])
+summary(lab_1)
+
+lab_2 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==2,])
+summary(lab_2)
+
+lab_3 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==3,])
+summary(lab_3)
+
+# Confidence errors calculated by copying outputs from the summaries above
+
+lab_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
+                           low = c(lab_1$coefficients[1] - 1.96*lab_1$se[1], lab_2$coefficients[1] - 1.96*lab_2$se[1], lab_3$coefficients[1] - 1.96*lab_3$se[1]),
+                           est = c(lab_1$coefficients[1], lab_2$coefficients[1], lab_3$coefficients[1]),
+                           high = c(lab_1$coefficients[1] + 1.96*lab_1$se[1], lab_2$coefficients[1] + 1.96*lab_2$se[1], lab_3$coefficients[1] + 1.96*lab_3$se[1]))
+
+# Making a figure like 2a
+
+d2_lab_f <- ggplot(lab_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
+  ggtitle("(a) Effect of Moonlighting on Vote Attendance.\n By constituency distance to London as the crow flies, only Labour MPs") + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "darkred") + 
+  scale_x_discrete("") + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
+  ylab("Regression coefficients") +
+  geom_hline(yintercept=0, color="black") + 
+  theme_bw() + 
+  theme(text = element_text(size=10))
+
+### All ###
+
+all_1 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==1,])
+summary(lab_1)
+
+all_2 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==2,])
+summary(lab_2)
+
+all_3 <- feols(present ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==3,])
+summary(lab_3)
+
+# Confidence errors calculated by copying outputs from the summaries above
+
+all_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
+                           low = c(all_1$coefficients[1] - 1.96*all_1$se[1], all_2$coefficients[1] - 1.96*all_2$se[1], all_3$coefficients[1] - 1.96*all_3$se[1]),
+                           est = c(all_1$coefficients[1], all_2$coefficients[1], all_3$coefficients[1]),
+                           high = c(all_1$coefficients[1] + 1.96*all_1$se[1], all_2$coefficients[1] + 1.96*all_2$se[1], all_3$coefficients[1] + 1.96*all_3$se[1]))
+
+# Making a figure like 2a
+
+d2_all_f <- ggplot(all_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
+  ggtitle("(a) Effect of Moonlighting on Vote Attendance.\n By constituency distance to London as the crow flies, all MPs") + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "darkgreen") + 
+  scale_x_discrete("") + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
+  ylab("Regression coefficients") +
+  geom_hline(yintercept=0, color="black") + 
+  theme_bw() + 
+  theme(text = element_text(size=10))
+
+# Altering the original for conservatives to make it fit the theming. Note that I'm just using d2c - the data is ready
+
+d2_con_f <- ggplot(d2_c, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
+  ggtitle("(a) Effect of Moonlighting on Vote Attendance.\n By constituency distance to London as the crow flies, only Conservative MPs") + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "blue") + 
+  scale_x_discrete("") + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
+  ylab("Regression coefficients") +
+  geom_hline(yintercept=0, color="black") + 
+  theme_bw() + 
+  theme(text = element_text(size=10))
+
+#### Figure 2b ####
+
+# Map 2b for Conservatives
+
+UK_map_con <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
   geom_polygon(fill = "white", colour = "black") +
-  coord_map(ylim = c(50, 55.5)) +
+  coord_map(ylim = c(50, 59)) +
   geom_point(data = data[data$dist.tercile.con == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
   geom_point(data = locdata[locdata$dist.tercile.con == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
   geom_segment(data = locdata[locdata$dist.tercile.con == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
                arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
-  scale_color_gradient(low = "darkblue", high = "lightblue") +
+  scale_color_gradient(low = "blue", high = "lightblue") +
   theme_void() + 
   theme(legend.position = "none")
 
-### Improved Labour map ###
+#### Map 2b for Labour ####
 
-# Adding labour terciles to locdata
-
-locdata <- left_join(locdata, select(data, id, dist.tercile.lab), by = "id")
-
-# The map
-
-UK_map_3 <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
+UK_map_lab <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
   geom_polygon(fill = "white", colour = "black") +
-  coord_map(ylim = c(50, 55.5)) +
+  coord_map(ylim = c(50, 59)) +
   geom_point(data = data[data$dist.tercile.lab == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
   geom_point(data = locdata[locdata$dist.tercile.lab == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
   geom_segment(data = locdata[locdata$dist.tercile.lab == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
@@ -92,21 +149,89 @@ UK_map_3 <- ggplot(data = UK, aes(x = long, y = lat, group = group)) +
   theme_void() + 
   theme(legend.position = "none")
 
-### Improved other map
+#### Map 2b for All ####
 
-# Adding ncon terciles to locdata
-
-locdata <- left_join(locdata, select(data, id, dist.tercile.ncon), by = "id")
-
-# The map
-
-UK_map_4 <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
+UK_map_all <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
   geom_polygon(fill = "white", colour = "black") +
-  coord_map(ylim = c(50, 55.5)) +
-  geom_point(data = data[data$dist.tercile.ncon == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
-  geom_point(data = locdata[locdata$dist.tercile.ncon.x == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
-  geom_segment(data = locdata[locdata$dist.tercile.ncon.x == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
+  coord_map(ylim = c(50, 59)) +
+  geom_point(data = data[data$dist.tercile.all == 3,], aes(x = const.x, y = const.y), col = "grey", alpha = 0.3, size = 1.5) + 
+  geom_point(data = locdata[locdata$dist.tercile.all == 3,], aes(x = const.x, y = const.y), col = "black", alpha = 1, size = 2.5) +
+  geom_segment(data = locdata[locdata$dist.tercile.all == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
                arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
-  scale_color_gradient(low = "red", high = "yellow") +
+  scale_color_gradient(low = "darkgreen", high = "lightgreen") +
   theme_void() + 
   theme(legend.position = "none")
+
+#### Figure 2c ####
+
+# Running regressions
+
+clab_1 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==1,])
+summary(lab_1)
+
+clab_2 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==2,])
+summary(lab_2)
+
+clab_3 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1 & data$dist.tercile.lab==3,])
+summary(lab_3)
+
+# Confidence errors calculated by copying outputs from the summaries above
+
+clab_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
+                           low = c(clab_1$coefficients[1] - 1.96*clab_1$se[1], clab_2$coefficients[1] - 1.96*clab_2$se[1], clab_3$coefficients[1] - 1.96*clab_3$se[1]),
+                           est = c(clab_1$coefficients[1], clab_2$coefficients[1], clab_3$coefficients[1]),
+                           high = c(clab_1$coefficients[1] + 1.96*clab_1$se[1], clab_2$coefficients[1] + 1.96*clab_2$se[1], clab_3$coefficients[1] + 1.96*clab_3$se[1]))
+
+# Making a figure like 2c
+
+d2_clab_f <- ggplot(clab_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
+  ggtitle("(a) Effect of Moonlighting on Probability of claiming London Allowanc.\n By constituency distance to London as the crow flies, only Labour MPs") + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "darkred") + 
+  scale_x_discrete("") + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
+  ylab("Regression coefficients") +
+  geom_hline(yintercept=0, color="black") + 
+  theme_bw() + 
+  theme(text = element_text(size=10))
+
+### All ###
+
+call_1 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==1,])
+summary(lab_1)
+
+call_2 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==2,])
+summary(lab_2)
+
+call_3 <- feols(expense.accomodation.rent.bin ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$dist.tercile.all==3,])
+summary(lab_3)
+
+# Confidence errors calculated by copying outputs from the summaries above
+
+call_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
+                           low = c(call_1$coefficients[1] - 1.96*call_1$se[1], call_2$coefficients[1] - 1.96*call_2$se[1], call_3$coefficients[1] - 1.96*call_3$se[1]),
+                           est = c(call_1$coefficients[1], call_2$coefficients[1], call_3$coefficients[1]),
+                           high = c(call_1$coefficients[1] + 1.96*call_1$se[1], call_2$coefficients[1] + 1.96*call_2$se[1], call_3$coefficients[1] + 1.96*call_3$se[1]))
+
+# Making a figure like 2c
+
+d2_call_f <- ggplot(call_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
+  ggtitle("(a) Effect of Moonlighting on Probability of claiming London Allowance.\n By constituency distance to London as the crow flies, all MPs") + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "darkgreen") + 
+  scale_x_discrete("") + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
+  ylab("Regression coefficients") +
+  geom_hline(yintercept=0, color="black") + 
+  theme_bw() + 
+  theme(text = element_text(size=10))
+
+### Again making one for Conservatives to fit the theming
+
+d2_ccon_f <- ggplot(d2_c, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
+  ggtitle("(a) Effect of Moonlighting on Probability of claiming London Allowance.\n By constituency distance to London as the crow flies, all MPs") + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "darkblue") + 
+  scale_x_discrete("") + 
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
+  ylab("Regression coefficients") +
+  geom_hline(yintercept=0, color="black") + 
+  theme_bw() + 
+  theme(text = element_text(size=10))
