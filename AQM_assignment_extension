@@ -232,3 +232,13 @@ d2_ccon_f <- ggplot(d2_c, aes(x = factor(param, c("Lowest Tercile", "Middle Terc
   geom_hline(yintercept=0, color="black") + 
   theme_bw() + 
   theme(text = element_text(size=10))
+
+#### For discussion - the number of directors who work in knowledge for profit and the number of directors ####
+
+# Conservative directors
+
+n_distinct(data$id[data$con == 1 & data$job_director])
+
+# Conservative knowledge-for-profit
+
+n_distinct(data$id[data$con == 1 & data$indcat_knowledge_fp])
