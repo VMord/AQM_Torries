@@ -14,6 +14,10 @@ locdata <- locdata[locdata$foreign == 0,]
 CoL_y <- 51.51279 
 CoL_x <- -0.09184
 
+# Making map of UK, limited to only third tercile
+UK <- map_data(map = "world", region = "UK") 
+
+
 # Merging these into the locdata by taking the difference between x and y, and then adding those together
 
 locdata$london.x <- abs(CoL_x - locdata$employ.x)
