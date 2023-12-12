@@ -1,5 +1,14 @@
 #### Creating distance terciles for labour and labour + other all, as well as a plot point for London ####
 
+# Reloading data and locdata for clean slate
+
+load("/Users/victormordhorst/Documents/RFiler/AQM/data_mpyear.rda")
+load("/Users/victormordhorst/Documents/RFiler/AQM/employment_coords.rda")
+
+# Removing MPs who work in foreign countries
+
+locdata <- locdata[locdata$foreign == 0,]
+
 # Getting coordinates for City of London and saving them
 
 CoL_y <- 51.51279 
@@ -41,6 +50,11 @@ id_terts <- id_terts %>%
 locdata$id <- as.numeric(locdata$id)
 
 locdata <- left_join(locdata, id_terts, by = "id")
+
+# I need to include a "group" variable to make the map work, just 1
+
+locdata$group <- 1
+data$group <- 1
 
 #### Figure 2a ####
 
@@ -90,9 +104,9 @@ summary(lab_3)
 # Confidence errors calculated by copying outputs from the summaries above
 
 ncon_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
-                           low = c(ncon_1$coefficients[1] - 1.96*ncon_1$se[1], ncon_2$coefficients[1] - 1.96*ncon_2$se[1], ncon_3$coefficients[1] - 1.96*ncon_3$se[1]),
-                           est = c(ncon_1$coefficients[1], ncon_2$coefficients[1], ncon_3$coefficients[1]),
-                           high = c(ncon_1$coefficients[1] + 1.96*ncon_1$se[1], ncon_2$coefficients[1] + 1.96*ncon_2$se[1], ncon_3$coefficients[1] + 1.96*ncon_3$se[1]))
+                            low = c(ncon_1$coefficients[1] - 1.96*ncon_1$se[1], ncon_2$coefficients[1] - 1.96*ncon_2$se[1], ncon_3$coefficients[1] - 1.96*ncon_3$se[1]),
+                            est = c(ncon_1$coefficients[1], ncon_2$coefficients[1], ncon_3$coefficients[1]),
+                            high = c(ncon_1$coefficients[1] + 1.96*ncon_1$se[1], ncon_2$coefficients[1] + 1.96*ncon_2$se[1], ncon_3$coefficients[1] + 1.96*ncon_3$se[1]))
 
 # Making a figure like 2a
 
@@ -175,9 +189,9 @@ summary(clab_3)
 # Confidence errors calculated by copying outputs from the summaries above
 
 clab_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
-                           low = c(clab_1$coefficients[1] - 1.96*clab_1$se[1], clab_2$coefficients[1] - 1.96*clab_2$se[1], clab_3$coefficients[1] - 1.96*clab_3$se[1]),
-                           est = c(clab_1$coefficients[1], clab_2$coefficients[1], clab_3$coefficients[1]),
-                           high = c(clab_1$coefficients[1] + 1.96*clab_1$se[1], clab_2$coefficients[1] + 1.96*clab_2$se[1], clab_3$coefficients[1] + 1.96*clab_3$se[1]))
+                            low = c(clab_1$coefficients[1] - 1.96*clab_1$se[1], clab_2$coefficients[1] - 1.96*clab_2$se[1], clab_3$coefficients[1] - 1.96*clab_3$se[1]),
+                            est = c(clab_1$coefficients[1], clab_2$coefficients[1], clab_3$coefficients[1]),
+                            high = c(clab_1$coefficients[1] + 1.96*clab_1$se[1], clab_2$coefficients[1] + 1.96*clab_2$se[1], clab_3$coefficients[1] + 1.96*clab_3$se[1]))
 
 # Making a figure like 2c
 
@@ -205,9 +219,9 @@ summary(lab_3)
 # Confidence errors calculated by copying outputs from the summaries above
 
 call_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highest Tercile"),
-                           low = c(call_1$coefficients[1] - 1.96*call_1$se[1], call_2$coefficients[1] - 1.96*call_2$se[1], call_3$coefficients[1] - 1.96*call_3$se[1]),
-                           est = c(call_1$coefficients[1], call_2$coefficients[1], call_3$coefficients[1]),
-                           high = c(call_1$coefficients[1] + 1.96*call_1$se[1], call_2$coefficients[1] + 1.96*call_2$se[1], call_3$coefficients[1] + 1.96*call_3$se[1]))
+                            low = c(call_1$coefficients[1] - 1.96*call_1$se[1], call_2$coefficients[1] - 1.96*call_2$se[1], call_3$coefficients[1] - 1.96*call_3$se[1]),
+                            est = c(call_1$coefficients[1], call_2$coefficients[1], call_3$coefficients[1]),
+                            high = c(call_1$coefficients[1] + 1.96*call_1$se[1], call_2$coefficients[1] + 1.96*call_2$se[1], call_3$coefficients[1] + 1.96*call_3$se[1]))
 
 # Making a figure like 2c
 
