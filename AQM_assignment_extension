@@ -2,8 +2,8 @@
 
 # Reloading data and locdata for clean slate
 
-load("/Users/victormordhorst/Documents/RFiler/AQM/data_mpyear.rda")
-load("/Users/victormordhorst/Documents/RFiler/AQM/employment_coords.rda")
+load("/Users/thomaspadkjaer/Downloads/data_mpyear.rda")
+load("/Users/thomaspadkjaer/Downloads/employment_coords.rda")
 
 # Removing MPs who work in foreign countries
 
@@ -13,10 +13,6 @@ locdata <- locdata[locdata$foreign == 0,]
 
 CoL_y <- 51.51279 
 CoL_x <- -0.09184
-
-# Making map of UK, limited to only third tercile
-UK <- map_data(map = "world", region = "UK") 
-
 
 # Merging these into the locdata by taking the difference between x and y, and then adding those together
 
@@ -46,7 +42,7 @@ data <- data %>%
 ### Merging these into locdata
 
 id_terts <- data %>%
-  select(id, dist.tercile.lab, dist.tercile.ncon)
+  dplyr::select(id, dist.tercile.lab, dist.tercile.ncon)
 
 id_terts <- id_terts %>%
   distinct(id, .keep_all = TRUE)
@@ -85,14 +81,21 @@ lab_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highes
 # Making a figure like 2a
 
 d2_lab_f <- ggplot(lab_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
-  ggtitle("(a) Effect of Moonlighting on Vote Attendance.\n By constituency distance to London as the crow flies, only Labour MPs") + 
   geom_pointrange(aes(ymax = high, ymin = low), color = "darkred") + 
   scale_x_discrete("") + 
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
-  ylab("Regression coefficients") +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  labs(y="Regression coefficients", caption = "(a) Effect of Moonlighting on Probability of claiming London Allowance\n      By constituency distance to London as the crow flies, all MPs") +
   geom_hline(yintercept=0, color="black") + 
-  theme_bw() + 
-  theme(text = element_text(size=10))
+  theme(text = element_text(size=10)) + 
+  geom_vline(xintercept=0, color="grey") + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 360, size = 7), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 12),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 ### All ###
 
@@ -115,29 +118,46 @@ ncon_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highe
 # Making a figure like 2a
 
 d2_ncon_f <- ggplot(ncon_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
-  ggtitle("(a) Effect of Moonlighting on Vote Attendance.\n By constituency distance to London as the crow flies, all non-Conservative MPs") + 
   geom_pointrange(aes(ymax = high, ymin = low), color = "darkgreen") + 
   scale_x_discrete("") + 
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
-  ylab("Regression coefficients") +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  labs(y="Regression coefficients", caption = "(a) Effect of Moonlighting on Probability of claiming London Allowance\n      By constituency distance to London as the crow flies, all MPs") +
   geom_hline(yintercept=0, color="black") + 
-  theme_bw() + 
-  theme(text = element_text(size=10))
+  theme(text = element_text(size=10)) + 
+  geom_vline(xintercept=0, color="grey") + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 360, size = 7), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 12),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 # Altering the original for conservatives to make it fit the theming. Note that I'm just using d2c - the data is ready
 
 d2_con_f <- ggplot(d2_c, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
-  ggtitle("(a) Effect of Moonlighting on Vote Attendance.\n By constituency distance to London as the crow flies, only Conservative MPs") + 
   geom_pointrange(aes(ymax = high, ymin = low), color = "blue") + 
   scale_x_discrete("") + 
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
-  ylab("Regression coefficients") +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  labs(y="Regression coefficients", caption = "(a) Effect of Moonlighting on Probability of claiming London Allowance\n      By constituency distance to London as the crow flies, all MPs") +
   geom_hline(yintercept=0, color="black") + 
-  theme_bw() + 
-  theme(text = element_text(size=10))
-
+  theme(text = element_text(size=10)) + 
+  geom_vline(xintercept=0, color="grey") + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 360, size = 7), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 12),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
 #### Figure 2b ####
 
+
+# Making map of UK, limited to only third tercile
+
+UK <- map_data(map = "world", region = "UK") 
 # Map 2b for Conservatives
 
 UK_map_con <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
@@ -148,8 +168,11 @@ UK_map_con <- ggplot(data = UK, aes(x = long, y = lat, group = group)) +
   geom_segment(data = locdata[locdata$dist.tercile.con == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
                arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
   scale_color_gradient(low = "blue", high = "lightblue") +
+  geom_point(aes(x = CoL_x, CoL_y), shape= 8, size=3, fill = "black") + 
+  labs(caption = "(b) Constituencies and Employment\n      Location for Highest Constituency") + 
   theme_void() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  theme(plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 #### Map 2b for Labour ####
 
@@ -161,8 +184,11 @@ UK_map_lab <- ggplot(data = UK, aes(x = long, y = lat, group = group)) +
   geom_segment(data = locdata[locdata$dist.tercile.lab == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
                arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
   scale_color_gradient(low = "red", high = "yellow") +
+  geom_point(aes(x = CoL_x, CoL_y), shape= 8, size=3, fill = "black") + 
+  labs(caption = "(b) Constituencies and Employment\n      Location for Highest Constituency") + 
   theme_void() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  theme(plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 #### Map 2b for nCon ####
 
@@ -174,8 +200,11 @@ UK_map_ncon <- ggplot(data = UK, aes(x = long, y = lat, group = group)) +
   geom_segment(data = locdata[locdata$dist.tercile.ncon == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y, color = london), 
                arrow = arrow(length = unit(0.2, "cm"), ends = "first"), alpha = 0.35) + 
   scale_color_gradient(low = "darkgreen", high = "lightgreen") +
+  geom_point(aes(x = CoL_x, CoL_y), shape= 8, size=3, fill = "black") + 
+  labs(caption = "(b) Constituencies and Employment\n      Location for Highest Constituency") + 
   theme_void() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  theme(plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 #### Figure 2c ####
 
@@ -200,13 +229,21 @@ clab_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highe
 # Making a figure like 2c
 
 d2_clab_f <- ggplot(clab_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
-  ggtitle("(a) Effect of Moonlighting on Probability of claiming London Allowance.\n By constituency distance to London as the crow flies, only Labour MPs") + 
   geom_pointrange(aes(ymax = high, ymin = low), color = "darkred") + 
   scale_x_discrete("") + 
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
-  ylab("Regression coefficients") +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  labs(y="Regression coefficients", caption = "(a) Effect of Moonlighting on Probability of claiming London Allowance\n      By constituency distance to London as the crow flies, all MPs") +
   geom_hline(yintercept=0, color="black") + 
-  theme_bw() + 
+  theme(text = element_text(size=10)) + 
+  geom_vline(xintercept=0, color="grey") + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 360, size = 7), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 12),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
   theme(text = element_text(size=10))
 
 ### All ###
@@ -230,26 +267,44 @@ call_terciles <- data.frame(param = c("Lowest Tercile", "Middle Tercile", "Highe
 # Making a figure like 2c
 
 d2_call_f <- ggplot(call_terciles, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
-  ggtitle("(a) Effect of Moonlighting on Probability of claiming London Allowance.\n By constituency distance to London as the crow flies, all MPs") + 
   geom_pointrange(aes(ymax = high, ymin = low), color = "darkgreen") + 
   scale_x_discrete("") + 
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
-  ylab("Regression coefficients") +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  labs(y="Regression coefficients", caption = "(a) Effect of Moonlighting on Probability of claiming London Allowance\n      By constituency distance to London as the crow flies, all MPs") +
   geom_hline(yintercept=0, color="black") + 
-  theme_bw() + 
-  theme(text = element_text(size=10))
+  theme(text = element_text(size=10)) + 
+  geom_vline(xintercept=0, color="grey") + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 360, size = 7), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 12),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 ### Again making one for Conservatives to fit the theming
 
 d2_ccon_f <- ggplot(d2_c, aes(x = factor(param, c("Lowest Tercile", "Middle Tercile", "Highest Tercile")), y=est)) + 
-  ggtitle("(a) Effect of Moonlighting on Probability of claiming London Allowance.\n By constituency distance to London as the crow flies, all MPs") + 
   geom_pointrange(aes(ymax = high, ymin = low), color = "darkblue") + 
   scale_x_discrete("") + 
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 20)) +
-  ylab("Regression coefficients") +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  labs(y="Regression coefficients", caption = "(a) Effect of Moonlighting on Probability of claiming London Allowance\n      By constituency distance to London as the crow flies, all MPs") +
   geom_hline(yintercept=0, color="black") + 
-  theme_bw() + 
-  theme(text = element_text(size=10))
+  theme(text = element_text(size=10)) + 
+  geom_vline(xintercept=0, color="grey") + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 360, size = 7), 
+        axis.line.x = element_line(color="grey", size = 0.5),
+        axis.title.x = element_text(size = 12),
+        axis.line.y = element_line(color="grey", size = 0.5),
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
+
+
+
+
 
 #### For discussion - the number of directors who work in knowledge for profit and the number of directors ####
 
@@ -260,3 +315,31 @@ n_distinct(data$id[data$con == 1 & data$job_director])
 # Conservative knowledge-for-profit
 
 n_distinct(data$id[data$con == 1 & data$indcat_knowledge_fp])
+
+
+
+lab_fig <- grid.arrange(
+  d2_lab_f, UK_map_lab, d2_clab_f, 
+  nrow=1, 
+  ncol=3,
+  top=text_grob("FIGURE 2 Explaning the Positive Effect of Private Sector Jobs on Vote Participation,\n                 Conservative MPs", 
+                size = 10, face = "bold",  hjust = 0, x = 0, lineheight = 1))
+
+
+ncon_fig <- grid.arrange(
+  d2_ncon_f, UK_map_ncon, d2_ncon_f, 
+  nrow=1, 
+  ncol=3,
+  top=text_grob("FIGURE 2 Explaning the Positive Effect of Private Sector Jobs on Vote Participation,\n                 Conservative MPs", 
+                size = 10, face = "bold",  hjust = 0, x = 0, lineheight = 1))
+
+con_fig <- grid.arrange(
+  d2_con_f, UK_map_con, d2_con_f, 
+  nrow=1, 
+  ncol=3,
+  top=text_grob("FIGURE 2 Explaning the Positive Effect of Private Sector Jobs on Vote Participation,\n                 Conservative MPs", 
+                size = 10, face = "bold",  hjust = 0, x = 0, lineheight = 1))
+
+
+
+
