@@ -1,5 +1,7 @@
 #### Table 1 ####
 
+### Running regressions for all, conservative and labour for the three dependent variables ###
+
 ## Vote rebellions ##
 
 # All
@@ -36,11 +38,17 @@ summary(t1pl)
 
 ## Number of parliamentary questions (q) log ##
 
+# All
+
 t1qa <- feols(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + shadow.cabinet + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data)
 summary(t1qa)
 
+# Conservative
+
 t1qc <- feols(questcount.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
 summary(t1qc)
+
+# Labour
 
 t1ql <- feols(questcount.log ~ bin.1000 + bin.1000 + shadow.cabinet + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$lab==1,])
 summary(t1ql)
@@ -59,7 +67,11 @@ models <- list(
   "Labour" = t1ql
 )
 
+# Saving headers as a string for the modelsummary output
+
 headers <- c("Vote Rebellion (Share)", "Vote Participation (Share)", "log(Number of Parliamentary Questions +1)", each = 3)
+
+# Outputting model summary as a Latex file, which I will copy into Latex
 
 modelsummary(models, stars = TRUE, statistic = NULL, fmt_decimal(digits = 3, pdigits = NULL),
              notes = "All regressions include MP and year fixed-effects, as well the following control variables: entered parliament, left parliament, minister,\n
