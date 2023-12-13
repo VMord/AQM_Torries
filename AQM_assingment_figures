@@ -1,9 +1,3 @@
-# Installing necessary packages
-
-install.packages(c("ggplot2", "dplyr", "tidyr", "sjPlot", "gridExtra", "cowplot", "ggpubr", 
-                   "forcats", "lfe", "stringr", "fixest", "modelsummary", "kableExtra", 
-                   "tidyverse", "maps", "mapproj", "grid", "ggpp", "ggpmisc"))
-
 # Load the necessary library
 library(ggplot2)
 library(dplyr)
@@ -24,6 +18,8 @@ library(mapproj)
 library(grid)
 library(ggpp)
 library(ggpmisc)
+library(ggtext)
+library(purrr)
 
 load("/Users/thomaspadkjaer/Downloads/data_mpyear.rda")
 # Assuming the data is loaded into a variable named 'data'
@@ -42,22 +38,22 @@ d1_a <- data %>%
     sum_oth = sum(earnings.all.infl[oth == 1]/1000000))
 
 # Create the plot
-
+ 
 d1_a_f <- ggplot(d1_a, aes(x = year)) +
-  geom_line(aes(y = sum_all), linetype = "solid", lwd=1) +
-  geom_line(aes(y = sum_con), linetype = "dashed", lwd=1) +
-  geom_line(aes(y = sum_lab), linetype = "dotdash", lwd=1) +
-  geom_line(aes(y = sum_oth), linetype = "dotted", lwd=1) +
-  geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_all[d1_a$year == max(d1_a$year)]), 
-            aes(label = "All", x = year, y = y), hjust = 1.4, vjust = 0) +
+  geom_line(aes(y = sum_all), linetype = "solid", lwd=0.5) +
+  geom_line(aes(y = sum_con), linetype = "dashed", lwd=0.5) +
+  geom_line(aes(y = sum_lab), linetype = "dotdash", lwd=0.5) +
+  geom_line(aes(y = sum_oth), linetype = "dotted", lwd=0.5) +
+  geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_all[d1_a$year == median(d1_a$year)]), 
+            aes(label = "All", x = year, y = y), hjust = 0.5, vjust = 1.3, size = 2) +
   geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_con[d1_a$year == median(d1_a$year)]), 
-            aes(label = "Con", x = year, y = y), hjust = 1.4, vjust = -0.5) +
+            aes(label = "Conservatives", x = year, y = y), hjust = 0.5, vjust = 1.5, size = 2) +
   geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_lab[d1_a$year == median(d1_a$year)]), 
-            aes(label = "Lab", x = year, y = y), hjust = 1.4, vjust = -1.5) +
+            aes(label = "Labour", x = year, y = y), hjust = 0.5, vjust = -1.5, size = 2) +
   geom_text(data = data.frame(year = median(d1_a$year), y = d1_a$sum_oth[d1_a$year == max(d1_a$year)]), 
-            aes(label = "Oth", x = year, y = y), hjust = 1.4, vjust = 0) +
+            aes(label = "Other", x = year, y = y), hjust = 0.5, vjust = 1.5, size = 2) +
   theme_minimal() +
-  labs(x = "Year", y = "Total Earnings in Million £", title = "(a) Total Sector Private Earnings") +
+  labs(x = "Year", y = "Total Earnings in Million £", caption = "(a) Total Sector Private Earnings") +
   theme(
     legend.position = "none",
     axis.text.x = element_text(angle = 90, hjust = 1)
@@ -67,13 +63,13 @@ d1_a_f <- ggplot(d1_a, aes(x = year)) +
   scale_x_continuous(breaks = unique(data$year)) + 
   scale_y_continuous(limits = c(0, 7), breaks = c(0, 1, 2, 3, 4, 5, 6, 7)) + 
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
-        axis.text.x = element_text(angle = 360), 
+        axis.text.x = element_text(angle = 360, size = 3.5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 8),
+        axis.title.x = element_text(size = 5),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(angle = 90),
-        axis.title.y = element_text(size = 8),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.text.y = element_text(angle = 90, size = 4),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
   
 
 ### Panel b ###
@@ -91,36 +87,36 @@ d1_b <- data %>%
 
 #Create the plot 
 d1_b_f <- ggplot(d1_b, aes(x = year)) +
-  geom_line(aes(y = share_all, group = 1), linetype = "solid", lwd=1) +
-  geom_line(aes(y = share_con, group = 1), linetype = "dashed", lwd=1) +
-  geom_line(aes(y = share_lab, group = 1), linetype = "dotdash", lwd=1) +
-  geom_line(aes(y = share_oth, group = 1), linetype = "dotted", lwd=1) +
+  geom_line(aes(y = share_all, group = 1), linetype = "solid", lwd=0.5) +
+  geom_line(aes(y = share_con, group = 1), linetype = "dashed", lwd=0.5) +
+  geom_line(aes(y = share_lab, group = 1), linetype = "dotdash", lwd=0.5) +
+  geom_line(aes(y = share_oth, group = 1), linetype = "dotted", lwd=0.5) +
   geom_text(data = data.frame(year = median(d1_b$year), y = d1_b$share_all[d1_a$year == max(d1_b$year)]), 
-            aes(label = "All", x = year, y = y), hjust = 1.4, vjust = 0) +
+            aes(label = "All", x = year, y = y), hjust = 0.5, vjust = 0, size = 2) +
   geom_text(data = data.frame(year = median(d1_b$year), y = d1_b$share_con[d1_a$year == max(d1_b$year)]), 
-            aes(label = "Con", x = year, y = y), hjust = 1, vjust = -0.5) +
+            aes(label = "Conservative", x = year, y = y), hjust = 0.8, vjust = 2.5, size = 2) +
   geom_text(data = data.frame(year = median(d1_b$year), y = d1_b$share_lab[d1_a$year == min(d1_b$year)]), 
-            aes(label = "Lab", x = year, y = y), hjust = 1.4, vjust = 0) +
+            aes(label = "Labour", x = year, y = y), hjust = 0.5, vjust = 1.8, size = 2) +
   geom_text(data = data.frame(year = median(d1_b$year), y = d1_b$share_oth[d1_a$year == max(d1_b$year)]), 
-            aes(label = "Oth", x = year, y = y), hjust = 1.4, vjust = 0) +
+            aes(label = "Other", x = year, y = y), hjust = 0.5, vjust = 0.5, size = 2) +
   theme_minimal() +
-  labs(x = "Year", y = "Share of MPs with Outside Income", title = "(b) Share of MPs with Private Sector \n Earnings ≥ 1000") +
+  labs(x = "Year", y = "Share of MPs with Outside Income", caption = "(b) Share of MPs with Private Sector jobs") +
   theme(
     legend.position = "none",
     axis.text.x = element_text(angle = 90, hjust = 1)
   ) +
-  geom_vline(xintercept = c(2010, 2015), color = "grey", linetype = "dashed", size = 1) +
-  geom_hline(yintercept = 0, color = "grey", linetype = "solid", size = 1) +
+  geom_vline(xintercept = c(2010, 2015), color = "grey", linetype = "dashed", size = 0.5) +
+  geom_hline(yintercept = 0, color = "grey", linetype = "solid", size = 0.5) +
   scale_x_continuous(breaks = unique(data$year)) + 
   scale_y_continuous(limits = c(0, 0.32), breaks = c(0.05, 0.10, 0.15, 0.20, 0.25, 0.30)) + 
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
-        axis.text.x = element_text(angle = 360), 
+        axis.text.x = element_text(angle = 360, size = 3.5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 8),
+        axis.title.x = element_text(size = 5),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(angle = 90),
-        axis.title.y = element_text(size = 8),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.text.y = element_text(angle = 90, size = 4),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 ### Panel c ###
 
@@ -135,20 +131,20 @@ d1_c <- data %>%
 
 #create the plot
 d1_c_f <- ggplot(d1_c, aes(x = year)) +
-  geom_line(aes(y = mean_nonull_all), linetype = "solid", lwd=1) +
-  geom_line(aes(y = mean_nonull_con), linetype = "dashed", lwd=1) +
-  geom_line(aes(y = mean_nonull_lab), linetype = "dotdash", lwd=1) +
-  geom_line(aes(y = mean_nonull_oth), linetype = "dotted", lwd=1) +
+  geom_line(aes(y = mean_nonull_all), linetype = "solid", lwd=0.5) +
+  geom_line(aes(y = mean_nonull_con), linetype = "dashed", lwd=0.5) +
+  geom_line(aes(y = mean_nonull_lab), linetype = "dotdash", lwd=0.5) +
+  geom_line(aes(y = mean_nonull_oth), linetype = "dotted", lwd=0.5) +
   geom_text(data = data.frame(year = median(d1_c$year), y = d1_c$mean_nonull_all[d1_a$year == median(d1_c$year)]), 
-            aes(label = "All", x = year, y = y), hjust = -1, vjust = -1.5) +
+            aes(label = "All", x = year, y = y), hjust = 0.5, vjust = 2,  size = 2) +
   geom_text(data = data.frame(year = median(d1_c$year), y = d1_c$mean_nonull_con[d1_a$year == median(d1_c$year)]), 
-            aes(label = "Con", x = year, y = y), hjust = -0.8, vjust = -4) +
+            aes(label = "Conservative", x = year, y = y), hjust = 0.5, vjust = 1, size = 2) +
   geom_text(data = data.frame(year = median(d1_c$year), y = d1_c$mean_nonull_lab[d1_a$year == median(d1_c$year)]), 
-            aes(label = "Lab", x = year, y = y), hjust = -0.8, vjust = 1) +
+            aes(label = "Labour", x = year, y = y), hjust = 0.5, vjust = 2, size = 2) +
   geom_text(data = data.frame(year = median(d1_c$year), y = d1_c$mean_nonull_oth[d1_a$year == median(d1_c$year)]), 
-            aes(label = "Oth", x = year, y = y), hjust = 1.4, vjust = -0.5) + 
+            aes(label = "Other", x = year, y = y), hjust = 0.5, vjust = 2, size = 2) + 
   theme_minimal() +
-  labs(x = "Year", y = "Mean Annual Earnings in £", title = "(c) Mean Earnings of MPs with Jobs") +
+  labs(x = "Year", y = "Mean Annual Earnings in £", caption = "(c) Mean Earnings of MPs with Jobs") +
   theme(
     legend.position = "none",
     axis.text.x = element_text(angle = 0, hjust = 1)
@@ -158,13 +154,13 @@ d1_c_f <- ggplot(d1_c, aes(x = year)) +
   scale_x_continuous(breaks = unique(data$year)) + 
   scale_y_continuous(limits = c(0, 55000), breaks = c(0, 10000, 20000, 30000, 40000, 50000)) + 
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
-        axis.text.x = element_text(angle = 360), 
+        axis.text.x = element_text(angle = 360, size = 3.5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 8),
+        axis.title.x = element_text(size = 5),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(angle = 90),
-        axis.title.y = element_text(size = 8),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.text.y = element_text(angle = 90, size = 4),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 ### Panel d ###
 d1_d <- data %>%
@@ -182,7 +178,7 @@ d1_d_f <- ggplot(d1_d, aes(y = proportion, x = fct_reorder(job, proportion))) +
   geom_col(color = "grey", fill = "grey") + 
   coord_flip() + 
   theme_minimal() +
-  labs(x = "", y = "Share", title = "(d) Employment: Share of Job Titles (MP-Years)") +
+  labs(x = "", y = "Share", caption = "(d) Employment: Share of Job Titles (MP-Years)") +
   scale_x_discrete(labels = c("sum_director" = "Director,\nChairman,\nPresident,\nPartner", 
                               "sum_consultant"="Consultant,\nAdvisor", 
                               "sum_board"="Board\nMember",
@@ -190,8 +186,10 @@ d1_d_f <- ggplot(d1_d, aes(y = proportion, x = fct_reorder(job, proportion))) +
   scale_y_continuous(limits = c(0, 0.40), breaks = c(0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35)) +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
         axis.line.y = element_line(color="grey", size = 0.3), 
-        plot.title = element_text(face = "bold", color = "black", size = 10),
-        axis.title.x = element_text(size = 8))
+        plot.caption = element_text(color = "black", size = 8, hjust = 0),
+        axis.title.x = element_text(size = 5), 
+        axis.text.y = element_text(size = 5), 
+        axis.text.x = element_text(size = 3.5))
 
 
 ### Panel e ###  
@@ -215,7 +213,7 @@ d1_e_f <- ggplot(d1_e, aes(y = proportion, x = fct_relevel(fct_reorder(job, prop
   geom_col(color = "grey", fill = "grey") + 
   coord_flip() +
   theme_minimal() +
-  labs(x = "", y = "Share", title = "(e) Employment: Share in Different Industries \n(MP-Years)") +
+  labs(x = "", y = "Share", caption = "(e) Employment: Share in Different Industries") +
   scale_x_discrete(labels = c("sum_goods" = "Goods",
                               "sum_knowledge_profit" ="Knowledge,\nfor-profit",
                               "sum_consulting"= "Consulting", 
@@ -227,8 +225,10 @@ d1_e_f <- ggplot(d1_e, aes(y = proportion, x = fct_relevel(fct_reorder(job, prop
   scale_y_continuous(limits = c(0, 0.25), breaks = c(0, 0.05, 0.10, 0.15, 0.20)) +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
         axis.line.y = element_line(color="grey", size = 0.3), 
-        plot.title = element_text(face = "bold", color = "black", size = 10),
-        axis.title.x = element_text(size = 8))
+        plot.caption = element_text(color = "black", size = 8, hjust = 0),
+        axis.title.x = element_text(size = 5), 
+        axis.text.y = element_text(size = 5), 
+        axis.text.x = element_text(size = 3.5))
 
 
 
@@ -238,7 +238,7 @@ grid.arrange(
   layout_matrix = rbind(c(1, 1, 2, 2, 3, 3),
                         c(4, 4, 4, 5, 5, 5)), 
   top=text_grob("FIGURE 1 Private Sector Earnings of Members of the House of Commons, 2010-2016", 
-               size = 15, face = "bold", hjust = 0.7, lineheight = 2))
+               size = 10, lineheight = 2, face = "bold", hjust = 0, x = 0))
 
 fig_1 <- arrangeGrob(
   d1_a_f, d1_b_f, d1_c_f, 
@@ -246,9 +246,8 @@ fig_1 <- arrangeGrob(
   layout_matrix = rbind(c(1, 1, 2, 2, 3, 3),
                         c(4, 4, 4, 5, 5, 5)), 
   top=text_grob("FIGURE 1 Private Sector Earnings of Members of the House of Commons, 2010-2016", 
-                size = 15, face = "bold", hjust = 0.7, lineheight = 2))
-
-ggsave(file="fig_1_assignment2.pdf", fig_1)
+                size = 10, lineheight = 2, face = "bold", hjust = 0, x = 0))
+ggsave(path = "/Users/thomaspadkjaer/Library/CloudStorage/OneDrive-Personligt/Statskundskab/AQM/Assingment_2", file="fig_1_assignment2.pdf", fig_1, width=5*1.5, height=2*2.5)
 
 #### FIGURE 2 ####
 
@@ -279,16 +278,16 @@ d2_a_f <- ggplot(d2_a, aes(y = factor(param, c("Highest Tercile", "Middle Tercil
   geom_hline(yintercept = d2_a$param, color="grey", alpha = 0.5) +
   geom_pointrange(aes(xmax = high, xmin = low), color = "black", linewidth = 1) + 
   scale_x_continuous(limits = c(-0.04, 0.10), breaks = c(-0.02, 0.00, 0.02, 0.04, 0.06, 0.08, 0.10)) +
-  labs(x ="Regression Coefficients", y = "", title = "(a) Effect of Moonlighting on Vote\nAttendance, by Constituency\nDistance to London") +
+  labs(x ="Regression Coefficients", y = "", caption = "(a) Effect of Moonlighting on Vote\n      Attendance, by Constituency\n      Distance to London") +
   theme_minimal() +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 3.5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 5),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
-
+        axis.text.y = element_text(angle = 0, size = 5),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 # Panel B - making a fun map!
 
@@ -296,7 +295,7 @@ d2_a_f <- ggplot(d2_a, aes(y = factor(param, c("Highest Tercile", "Middle Tercil
 
 load("/Users/thomaspadkjaer/Downloads/employment_coords.rda")
 
-locdata <- locdata[locdata$foreign == 0,]
+locdata <- locdata[locdata$foreign == 0 & locdata$con == 1,]
 
 # I need to include a "group" variable to make the map work, just 1
 
@@ -311,6 +310,11 @@ locdata$id <- as.numeric(locdata$id)
 
 f2b <- right_join(data, locdata, by = "id")
 
+# Getting coordinates for City of London and saving them
+
+CoL_y <- 51.51279 
+CoL_x <- -0.09184
+
 # Making map of UK, limited to only third tercile
 
 UK <- map_data(map = "world", region = "UK") 
@@ -318,10 +322,13 @@ UK <- map_data(map = "world", region = "UK")
 UK_map <- ggplot(data = UK, aes(x = long, y = lat, group = group)) + 
   geom_polygon(fill = "white", colour = "black") +
   coord_map(ylim = c(50, 55.5)) +
-  geom_point(data = data[data$dist.tercile.con == 3,], aes(x = const.x, y = const.y)) + 
+  geom_point(data = data[data$dist.tercile.con == 3,], aes(x = const.x, y = const.y), size = 0.5) + 
   geom_segment(data = locdata[locdata$dist.tercile.con == 3,], aes(x = employ.x, y = employ.y, xend = const.x, yend = const.y), 
-               arrow = arrow(length = unit(0.2, "cm"), ends = "first"), col = "red", alpha = 0.7) + 
-  theme_void()
+               arrow = arrow(length = unit(0.2, "cm"), ends = "first"), col = "grey", alpha = 0.7, size = 0.3) + 
+  geom_point(aes(x = CoL_x, CoL_y), shape= 8, size=1, fill = "black") + 
+  labs(caption = "(b) Constituencies and Employment\n      Location for Highest Constituency\n      Distance Tercile") + 
+  theme_void() + 
+  theme(plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 ### An improved map - our contribution
 
@@ -330,10 +337,7 @@ UK_map <- ggplot(data = UK, aes(x = long, y = lat, group = group)) +
 # Making an area of London, and colouring points where arrows terminate in London
 # Changing color of arrows depending on distance to London
 
-# Getting coordinates for City of London and saving them
 
-CoL_y <- 51.51279 
-CoL_x <- -0.09184
 
 # Merging these into the locdata by taking the difference between x and y, and then adding those together
 
@@ -384,34 +388,32 @@ d2_c_f <- ggplot(d2_c, aes(y = factor(param, c("Highest Tercile", "Middle Tercil
   geom_hline(yintercept = d2_c$param, color="grey", alpha = 0.5) +
   geom_pointrange(aes(xmax = high, xmin = low), color = "black", linewidth = 1) + 
   scale_x_continuous(limits = c(-0.10, 0.20), breaks = c(-0.05, 0.00, 0.05, 0.10, 0.15)) +
-  labs(x ="Regression Coefficients", y = "", title = "(c) Effect of Moonlighting Job on\nProbaility of Claiming London\nAllowance, By constiuency distance to London") +
+  labs(x ="Regression Coefficients", y = "", caption = "(c) Effect of Moonlighting Job on\n      Probaility of Claiming London\n      Allowance, By constiuency\n      distance to London") +
   theme_minimal() +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 3.5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 5),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
-
+        axis.text.y = element_text(angle = 0, size = 5),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0))
 
 grid.arrange(
   d2_a_f, UK_map, d2_c_f, 
   nrow=1, 
   ncol=3,
-  top=text_grob("FIGURE 2 Explaning the Positive Effect of Private Sector Jobs on Vote Participation,Conservative MPs", 
-                size = 15, face = "bold", hjust = 0.7, lineheight = 1))
+  top=text_grob("FIGURE 2 Explaning the Positive Effect of Private Sector Jobs on Vote Participation,\n                 Conservative MPs", 
+                size = 10, face = "bold",  hjust = 0, x = 0, lineheight = 1))
 
 fig_2 <- grid.arrange(
   d2_a_f, UK_map, d2_c_f, 
   nrow=1, 
   ncol=3,
-  top=text_grob("FIGURE 2 Explaning the Positive Effect of Private Sector Jobs\non Vote Participation, Conservative MPs", 
-                size = 15, face = "bold", hjust = 0.5, lineheight = 1))
+  top=text_grob("FIGURE 2 Explaning the Positive Effect of Private Sector Jobs on Vote Participation,\n                 Conservative MPs", 
+                size = 10, face = "bold", hjust = 0, x = 0,   lineheight = 1))
 
-ggsave(file="fig_2_assignment2.pdf", fig_2)
-
-
+ggsave(path = "/Users/thomaspadkjaer/Library/CloudStorage/OneDrive-Personligt/Statskundskab/AQM/Assingment_2", file="fig_2_assignment2.pdf", fig_2, height = 3.5, width = 9)
 
 #### FIGURE 3 ####
 
@@ -439,16 +441,16 @@ d3_a_f <- ggplot(d3_a, aes(y = factor(param, c("Consultant or Advisor", "Profess
   geom_hline(yintercept = d3_a$param, color="grey", alpha = 0.5) +
   geom_pointrange(aes(xmax = high, xmin = low), color = "black", linewidth = 1) + 
   scale_x_continuous(limits = c(-0.2, 0.9), breaks = c(-0.2, 0.0, 0.2, 0.4, 0.6, 0.8)) +
-  labs(x ="Regression Coefficients", y = "", title = "(a) Effect of Moonlighting on Vote\nAttendance, by Constituency\nDistance to London") +
+  labs(x ="Regression Coefficients", y = "", caption = "(a) Job Titles") +
   theme_minimal() +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 5),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
-
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0.5))
 
 # Panel B
 
@@ -470,31 +472,32 @@ d3_b_f <- ggplot(d3_b, aes(y = factor(reorder(param, est)), x=est)) +
   geom_hline(yintercept = d3_b$param, color="grey", alpha = 0.5) +
   geom_pointrange(aes(xmax = high, xmin = low), color = "black", linewidth = 1) + 
   scale_x_continuous(limits = c(-0.6, 1.5), breaks = c(-0.5, 0.0, 0.5, 1.0)) +
-  labs(x ="Regression Coefficients", y = "", title = "a) Effect of private sector employment\non Written parliamentary questions\nBy job title and industry, only Conservative MPs") +
+  labs(x ="Regression Coefficients", y = "", caption = "a) Industries ") +
   theme_minimal() +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 5),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0.5))
 
 grid.arrange(
   d3_a_f, d3_b_f, 
   nrow=1, 
   ncol=2,
-  top=text_grob("FIGURE 3 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("FIGURE 3 Effect of Private Sector Employment on Written Parliamentary Questions by\n                 Job Title and Industry, Conservative MPs ", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
 fig_3 <- grid.arrange(
   d3_a_f, d3_b_f, 
   nrow=1, 
   ncol=2,
-  top=text_grob("FIGURE 3  ", 
-                size = 15, face = "bold", hjust = 0.5))
+  top=text_grob("FIGURE 3 Effect of Private Sector Employment on Written Parliamentary Questions by\n                 Job Title and Industry, Conservative MPs ", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
-ggsave(file="fig_3_assignment2.pdf", fig_3)
+ggsave(path = "/Users/thomaspadkjaer/Library/CloudStorage/OneDrive-Personligt/Statskundskab/AQM/Assingment_2", file="fig_3_assignment2.pdf", fig_3, width = 9, height = 5.4)
 
 
 
@@ -567,33 +570,34 @@ d4 <- data.frame(
 d4_f <- ggplot(d4, aes(y = factor(reorder(param, est)), x=est)) + 
   geom_vline(xintercept=0, color="grey") + 
   geom_hline(yintercept = d4$param, color="grey", alpha = 0.5) +
-  geom_pointrange(aes(xmax = high, xmin = low), color = "black", linewidth = 1) + 
+  geom_pointrange(aes(xmax = high, xmin = low), color = "black", linewidth = 0.7, size = 0.3) + 
   scale_x_continuous(limits = c(-0.1, 0.35), breaks = c(-0.1, 0.0, 0.1, 0.2, 0.3)) +
   labs(x ="Regression Coefficients", y = "") +
   theme_minimal() +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 7), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.text.y = element_text(angle = 0, size = 6),
+        axis.title.y = element_text(size = 5))
 
 grid.arrange(
   d4_f, 
   nrow=1, 
   ncol=1,
-  top=text_grob("FIGURE 4 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("FIGURE 4 Effect of Private Sector Employment on Written Parliamentary Questions by\n                  Ministry, Conservative MPs", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
 fig_4 <- grid.arrange(
   d4_f, 
   nrow=1, 
   ncol=1,
-  top=text_grob("FIGURE 4 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("FIGURE 4 Effect of Private Sector Employment on Written Parliamentary Questions by\n                  Ministry, Conservative MPs", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
-ggsave(file="fig_4_assignment2.pdf", fig_4)
+
+ggsave(path = "/Users/thomaspadkjaer/Library/CloudStorage/OneDrive-Personligt/Statskundskab/AQM/Assingment_2", file="fig_4_assignment2.pdf", fig_4, height = 5.5, width = 9)
 
 
 #### FIGURE 5 ####
@@ -613,97 +617,100 @@ d5 <- right_join(min_charac, d4, by='param')
 
 
 d5_a_f <- ggplot(d5, aes(x = log(d5$proc.amount + 1), y = d5$est)) + 
-  geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 0.5, size = 0.3) + 
   scale_x_continuous(limits = c(0, 4.5), breaks = c(0, 1, 2, 3, 4) ) +
   scale_y_continuous(limits = c(-0.1, 0.35), breaks = c(-0.1, 0.0, 0.1, 0.2, 0.3)) +
-  labs(x ="(a)Procurement spending", y = "Regression Coefficients", 
-       title = "log(Procurement spending in Bn.£ + 1)") +
+  labs(caption ="(a) Procurement spending", y = "Regression Coefficients", 
+       x = "log(Procurement spending in Bn.£ + 1)") +
   geom_smooth(method = lm, se = FALSE, color = "black", fullrange=TRUE) + 
-  stat_correlation() +
+  stat_correlation(aes(x = log(d5$proc.amount + 1), y = d5$est), method = "pearson", size = 2.5)  +
   theme_minimal ()  +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 7),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
-
+        axis.text.y = element_text(angle = 90, size = 5),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0.5))
 
 
 
 d5_b_f <- ggplot(d5, aes(x = log(d5$projects.number + 1), y = d5$est)) + 
-  geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "black",  linewidth = 0.5, size = 0.3) + 
   scale_x_continuous(limits = c(0, 4.5), breaks = c(0, 1, 2, 3) ) +
   scale_y_continuous(limits = c(-0.1, 0.35), breaks = c(-0.1, 0.0, 0.1, 0.2, 0.3)) +
   labs(x ="log(No. Major projects + 1)", y = "Regression Coefficients", 
-       title = "(b)Number of major projects") +
+       caption = "(b) Number of major projects") +
   geom_smooth(method = lm, se = FALSE, color = "black", fullrange=TRUE) + 
-  stat_correlation() +
+  stat_correlation(aes(x = log(d5$projects.number + 1), y = d5$est), method = "pearson", size = 2.5)  +
   theme_minimal ()  +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 7),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.text.y = element_text(angle = 90, size = 5),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0.5))
 
 d5_c_f <- ggplot(d5, aes(x = log(d5$budget.amount + 1), y = d5$est)) + 
-  geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 0.5, size = 0.3) + 
   scale_x_continuous(limits = c(0, 5.5), breaks = c(0, 1, 2, 3, 4, 5) ) +
   scale_y_continuous(limits = c(-0.1, 0.35), breaks = c(-0.1, 0.0, 0.1, 0.2, 0.3)) +
   labs(x ="log(Operating Budget, Bn. £ + 1)", y = "Regression Coefficients", 
-       title = "(c) Operating Budget, Bn. £") +
+       caption = "(c) Operating Budget, Bn. £") +
   geom_smooth(method = lm, se = FALSE, color = "black", fullrange=TRUE) + 
-  stat_correlation() +
+  stat_correlation(aes(x = log(d5$budget.amount + 1), y = d5$est), method = "pearson", size = 2.5) +
   theme_minimal ()  +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 7),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
-
-
+        axis.text.y = element_text(angle = 90, size = 5),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0.5))
 
 d5_d_f <- ggplot(d5, aes(x = log(d5$employees + 1), y = d5$est)) + 
-  geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
+  geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 0.5, size = 0.3) + 
   scale_x_continuous(limits = c(3, 12), breaks = c(4, 6, 8, 10) ) +
   scale_y_continuous(limits = c(-0.1, 0.35), breaks = c(-0.1, 0.0, 0.1, 0.2, 0.3)) +
-  labs(x ="log(No. of employees+ 1", y = "Regression Coefficients", title = "(d)Number of employees") +
+  labs(x ="log(No. of employees+ 1)", y = "Regression Coefficients", 
+       caption = "(d) Number of employees") +
   geom_smooth(method = lm, se = FALSE, color = "black", fullrange=TRUE) + 
-  stat_correlation(aes(x = log(d5$employees + 1), y = d5$est), method = "pearson") +
+  stat_correlation(aes(x = log(d5$employees + 1), y = d5$est), method = "pearson", size = 2.5) +
   theme_minimal ()  +
-  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(), 
+        axis.text.x = element_text(angle = 360, size = 5), 
         axis.line.x = element_line(color="grey", size = 0.5),
-        axis.title.x = element_text(size = 10), 
-        axis.text.x =  element_text(size = 8),
+        axis.title.x = element_text(size = 7),
         axis.line.y = element_line(color="grey", size = 0.5),
-        axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
-
+        axis.text.y = element_text(angle = 90, size = 5),
+        axis.title.y = element_text(size = 5),
+        plot.caption = element_text(color = "black", size = 8, hjust = 0.5))
 
 grid.arrange(
   d5_a_f, d5_b_f,
   d5_c_f, d5_d_f,
   nrow=2, 
   ncol=2,
-  top=text_grob("FIGURE 5 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("Figure 5 Correlations between Ministry
+               Characteristics and Effect Size from \n               Figure 4 ", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
 fig_5 <- grid.arrange(
   d5_a_f, d5_b_f,
   d5_c_f, d5_d_f,
   nrow=2, 
   ncol=2,
-  top=text_grob("FIGURE 5 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("Figure 5 Correlations between Ministry
+               Characteristics and Effect Size from \n               Figure 4 ", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
-ggsave(file="fig_5_assignment2.pdf", fig_5)
+ggsave(path = "/Users/thomaspadkjaer/Library/CloudStorage/OneDrive-Personligt/Statskundskab/AQM/Assingment_2", file="fig_5_assignment2.pdf", fig_5, height = 8.14, width = 5.6)
 
-#### Figure 6 ####
+#### FIGURE 6 ####
 # Running all regressions
 
 a6 <- feols(quest.code.internalpolicy.log ~ bin.1000 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
@@ -718,8 +725,8 @@ d6_list <- list(a6 = a6, b6 = b6, c6 = c6, d6 = d6)
 # Getting estimates and upper-lower bounds
 
 param <- c("int policy", "fac.info", "timing", "urge_action")
-std <- sapply(f6_list, function(model) se(model)[1])
-est <- sapply(f6_list, function(model) coef(model)[1])
+std <- sapply(d6_list, function(model) se(model)[1])
+est <- sapply(d6_list, function(model) coef(model)[1])
 
 # Combining lists into a df for the model
 
@@ -751,29 +758,62 @@ d6_f <- ggplot(d6, aes(y = factor(reorder(param, est)), x=est)) +
 
 
 grid.arrange(d6_f,
-  top=text_grob("FIGURE 6 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("FIGURE 6 Effect of Private Sector Employment on Content of\n                  Written Parliamentary Questions, Conservative MPs ", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
 
-fig_6 <- grid.arrange(
-  d6_f,
-  top=text_grob("FIGURE 6 ", 
-                size = 15, face = "bold", hjust = 0.7))
+fig_6 <- grid.arrange(d6_f,
+                      top=text_grob("FIGURE 6 Effect of Private Sector Employment on Content of\n                  Written Parliamentary Questions, Conservative MPs ", 
+                                    size = 10, face = "bold", hjust = 0, x = 0))
 
-ggsave(file="fig_6_assignment2.pdf", fig_6)
+ggsave(path = "/Users/thomaspadkjaer/Library/CloudStorage/OneDrive-Personligt/Statskundskab/AQM/Assingment_2", file="fig_6_assignment2.pdf", fig_6, height = 6, width = 9)
+
+
 
 #### FIGURE 7 ####
+
+### Defining the function for the sign in the panels ###
+
+calculate_diff_and_significance <- function(draw, var1, var2) {
+  quant <- draw[,var1] - draw[,var2]
+  diff <- mean(quant)
+  quantdiff <- quantile(quant, c(0.005, 0.025, 0.05, 0.95, 0.975, 0.995))
+  
+  sig <- ifelse((sign(quantdiff)[3] == sign(quantdiff)[4]), "·", "")
+  sig <- ifelse((sign(quantdiff)[2] == sign(quantdiff)[5]), "*", sig)
+  sig <- ifelse((sign(quantdiff)[1] == sign(quantdiff)[6]), "**", sig)
+  
+  list(out = sprintf("%.3f", diff), sig = sig)
+}
+
+#Setting the pairs for later use
+pairs <- list(
+  c("beforejob.1", "beforejob.2"),
+  c("bin.1000", "beforejob.1"),
+  c("afterjob.1", "bin.1000"),
+  c("afterjob.2", "afterjob.1"))
+
+
+
+
 
 ## Panel A ##
 
 f7a_reg <- feols(rebel~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
 
+coef_est_a <- coef(f7a_reg)
+vcov_est_a <- vcov(f7a_reg)
+draw <- mvrnorm(10000, coef_est_a, vcov_est_a)
+
+output_7a <- purrr::map(pairs, ~calculate_diff_and_significance(draw, .x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 d7_a <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
                   low = c(f7a_reg$coefficients[1:5] - (f7a_reg$se[1:5]*1.96)),
                   est = c(f7a_reg$coefficients[1:5]),
                   high = c(f7a_reg$coefficients[1:5] + (f7a_reg$se[1:5]*1.96)))
-
 
 d7_a_f <- ggplot(d7_a, aes(x = factor(param, level = c("-2", "-1", "in Job", "1", "2")), y=est)) + 
   geom_hline(yintercept = 0, color="grey", alpha = 0.5) +
@@ -781,7 +821,11 @@ d7_a_f <- ggplot(d7_a, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-0.007, 0.004), breaks = c(-0.006, -0.004, -0.002, 0.000, 0.002)) +
-  labs(x ="", y = "Coefficient", title = "(a) Vote Rebellion") +
+  labs(x ="", y = "Coefficient", caption = "(a) Vote Rebellion") +
+  geom_text(aes(label = paste(output_7a$combined[1])), x = 1.5, y = -0.007) +
+  geom_text(aes(label = paste(output_7a$combined[2])), x = 2.5, y = -0.007) +
+  geom_text(aes(label = paste(output_7a$combined[3])), x = 3.5, y = -0.007) +
+  geom_text(aes(label = paste(output_7a$combined[4])), x = 4.5, y = -0.007) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -789,11 +833,22 @@ d7_a_f <- ggplot(d7_a, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
-
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5)) 
 ## Panel B ##
 
 f7b_reg <- feols(present ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1 & data$dist.tercile.con == 3,])
+
+
+coef_est_b <- coef(f7b_reg)
+vcov_est_b <- vcov(f7b_reg)
+draw <- mvrnorm(10000, coef_est_b, vcov_est_b)
+
+
+output_7b <- purrr::map(pairs, ~calculate_diff_and_significance(draw, .x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
+
 
 d7_b <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
                   low = c(f7b_reg$coefficients[1:5] - (f7b_reg$se[1:5]*1.96)),
@@ -806,7 +861,11 @@ d7_b_f <- ggplot(d7_b, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-0.05, 0.15), breaks = c(-0.05, 0.00, 0.05, 0.10, 0.15 )) +
-  labs(x ="", y = "Coefficient", title = "(b) Vote Participation, Highest Distance Tercile") +
+  labs(x ="", y = "Coefficient", caption = "(b) Vote Participation, Highest Distance Tercile") +
+  geom_text(aes(label = paste(output_7b$combined[1])), x = 1.5, y = -0.05) +
+  geom_text(aes(label = paste(output_7b$combined[2])), x = 2.5, y = -0.05) +
+  geom_text(aes(label = paste(output_7b$combined[3])), x = 3.5, y = -0.05) +
+  geom_text(aes(label = paste(output_7b$combined[4])), x = 4.5, y = -0.05) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -814,17 +873,26 @@ d7_b_f <- ggplot(d7_b, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
-
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
 
 ## Panel C ##
 
-d7_c_reg <- feols(questcount.log ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
+f7c_reg <- feols(questcount.log ~ beforejob.2 + beforejob.1 + bin.1000 + afterjob.1 + afterjob.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster = ~ id, data=data[data$con==1,])
+
+coef_est_c <- coef(f7c_reg)
+vcov_est_c <- vcov(f7c_reg)
+draw <- mvrnorm(10000, coef_est_c, vcov_est_c)
+
+output_7c <- purrr::map(pairs, ~calculate_diff_and_significance(draw, .x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
+
 
 d7_c <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
-                  low = c(d7_c_reg$coefficients[1:5] - (d7_c_reg$se[1:5]*1.96)),
-                  est = c(d7_c_reg$coefficients[1:5]),
-                  high = c(d7_c_reg$coefficients[1:5] + (d7_c_reg$se[1:5]*1.96)))
+                  low = c(f7c_reg$coefficients[1:5] - (f7c_reg$se[1:5]*1.96)),
+                  est = c(f7c_reg$coefficients[1:5]),
+                  high = c(f7c_reg$coefficients[1:5] + (f7c_reg$se[1:5]*1.96)))
 
 
 d7_c_f <- ggplot(d7_c, aes(x = factor(param, level = c("-2", "-1", "in Job", "1", "2")), y=est)) + 
@@ -833,7 +901,11 @@ d7_c_f <- ggplot(d7_c, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-1, 1), breaks = c(-0.5, 0, 0.5 )) +
-  labs(x ="", y = "Coefficient", title = "(c) Written Parliamentary Questions (log+1)") +
+  labs(x ="", y = "Coefficient", caption = "(c) Written Parliamentary Questions (log+1)") +
+  geom_text(aes(label = paste(output_7c$combined[1])), x = 1.5, y = -1) +
+  geom_text(aes(label = paste(output_7c$combined[2])), x = 2.5, y = -1) +
+  geom_text(aes(label = paste(output_7c$combined[3])), x = 3.5, y = -1) +
+  geom_text(aes(label = paste(output_7c$combined[4])), x = 4.5, y = -1) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -841,28 +913,24 @@ d7_c_f <- ggplot(d7_c, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
 
 
 grid.arrange(
-  d7_a_f, 
-  d7_b_f,
-  d7_c_f,
+  d7_a_f, d7_b_f, d7_c_f,
   nrow=3, 
   ncol=1,
-  top=text_grob("FIGURE 7 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("FIGURE 7 Temporal Dynamics of Private Sector Employment on Parliamentary\n                  Behavior, Conservative MPs ", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
 fig_7 <- grid.arrange(
-  d7_a_f, 
-  d7_b_f,
-  d7_c_f,
+  d7_a_f, d7_b_f, d7_c_f,
   nrow=3, 
   ncol=1,
-  top=text_grob("FIGURE 7 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("FIGURE 7 Temporal Dynamics of Private Sector Employment on Parliamentary\n                  Behavior, Conservative MPs ", 
+                size = 10, face = "bold", hjust = 0, x = 0))
 
-ggsave(file="fig_7_assignment2.pdf", fig_7)
+ggsave(path = "/Users/thomaspadkjaer/Library/CloudStorage/OneDrive-Personligt/Statskundskab/AQM/Assingment_2", file="fig_7_assignment2.pdf", fig_7, height = 8.5, width = 7.9)
 
 
 
@@ -876,6 +944,7 @@ ggsave(file="fig_7_assignment2.pdf", fig_7)
 
 
 #### FIGURE 8 ####
+
 # Regression model for job titles
 
 jobs_reg <- feols(questcount.log ~ beforejob.job_director.1000.2 + beforejob.job_director.1000.1 + I(job_director.1000>0) + afterjob.job_director.1000.1 + afterjob.job_director.1000.2 + beforejob.job_board.1000.2 + beforejob.job_board.1000.1 + I(job_board.1000>0) + afterjob.job_board.1000.1 + afterjob.job_board.1000.2 + beforejob.job_consultant.1000.2 + beforejob.job_consultant.1000.1 + I(job_consultant.1000>0) + afterjob.job_consultant.1000.1 + afterjob.job_consultant.1000.2 + beforejob.job_prof.1000.2 + beforejob.job_prof.1000.1 + I(job_prof.1000>0) + afterjob.job_prof.1000.1 + afterjob.job_prof.1000.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
@@ -886,7 +955,42 @@ summary(jobs_reg)
 ind_reg <- felm(questcount.log ~ beforejob.indcat_health.1000.2 + beforejob.indcat_health.1000.1 + I(indcat_health.1000>0) + afterjob.indcat_health.1000.1 + afterjob.indcat_health.1000.2 + beforejob.indcat_finance.1000.2 + beforejob.indcat_finance.1000.1 + I(indcat_finance.1000>0) + afterjob.indcat_finance.1000.1 + afterjob.indcat_finance.1000.2 + beforejob.indcat_consulting.1000.2 + beforejob.indcat_consulting.1000.1 + I(indcat_consulting.1000>0) + afterjob.indcat_consulting.1000.1 + afterjob.indcat_consulting.1000.2 + beforejob.indcat_knowledge_fp.1000.2 + beforejob.indcat_knowledge_fp.1000.1 + I(indcat_knowledge_fp.1000>0) + afterjob.indcat_knowledge_fp.1000.1 + afterjob.indcat_knowledge_fp.1000.2 + beforejob.indcat_knowledge_nfp.1000.2 + beforejob.indcat_knowledge_nfp.1000.1 + I(indcat_knowledge_nfp.1000>0) + afterjob.indcat_knowledge_nfp.1000.1 + afterjob.indcat_knowledge_nfp.1000.2 + beforejob.indcat_goods.1000.2 + beforejob.indcat_goods.1000.1 + I(indcat_goods.1000>0) + afterjob.indcat_goods.1000.1 + afterjob.indcat_goods.1000.2 + beforejob.indcat_services.1000.2 + beforejob.indcat_services.1000.1 + I(indcat_services.1000>0) + afterjob.indcat_services.1000.1 + afterjob.indcat_services.1000.2 + beforejob.indcat_other.1000.2 + beforejob.indcat_other.1000.1 + I(indcat_other.1000>0) + afterjob.indcat_other.1000.1 + afterjob.indcat_other.1000.2 + minister + minister.state + undersec + frontbench.team + com.chair + com.member + enter + leave | year + id, cluster ~ id, data=data[data$con==1,])
 summary(ind_reg)
 
+
+
+
+#Making the draws and the clustered covariance for the monte carlo method
+
+coef_est_jobs <- coef(jobs_reg)
+vcov_est_jobs <- vcov(jobs_reg)
+draw_jobs <- mvrnorm(10000, coef_est_jobs, vcov_est_jobs)
+
+calculate_diff_and_significance <- function(draw, var1, var2) {
+  quant <- draw[,var1] - draw[,var2]
+  diff <- mean(quant)
+  quantdiff <- quantile(quant, c(0.005, 0.025, 0.05, 0.95, 0.975, 0.995))
+  sig <- ifelse((sign(quantdiff)[3] == sign(quantdiff)[4]), "·", "")
+  sig <- ifelse((sign(quantdiff)[2] == sign(quantdiff)[5]), "*", sig)
+  sig <- ifelse((sign(quantdiff)[1] == sign(quantdiff)[6]), "**", sig)
+  
+  list(out = sprintf("%.3f", diff), sig = sig)
+}
+
+
 # Making a lot of models
+
+#Panel a 
+pairs_a <- list(
+  c("beforejob.job_director.1000.1", "beforejob.job_director.1000.2"),
+  c("I(job_director.1000 > 0)", "beforejob.job_director.1000.1"),
+  c("afterjob.job_director.1000.1", "I(job_director.1000 > 0)"),
+  c("afterjob.job_director.1000.2", "afterjob.job_director.1000.1"))
+
+
+output_8a <- purrr::map(pairs_a, ~calculate_diff_and_significance(draw_jobs, .x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
+
 d8_a <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
                   low = c(jobs_reg$coefficients[1:5] - (jobs_reg$se[1:5]*1.96)),
                   est = c(jobs_reg$coefficients[1:5]),
@@ -898,7 +1002,11 @@ d8_a_f <- ggplot(d8_a, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-1.25, 1), breaks = c(-1.0, -0.5, 0.0, 0.5)) +
-  labs(x ="", y = "Coefficient", title = "(a) Job Title: Director,\nChairman, President,\nPartner") +
+  labs(x ="", y = "Coefficient", caption = "(a) Job Title: Director,\nChairman, President") +
+  geom_text(aes(label = paste(output_8a$combined[1])), x = 1.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8a$combined[2])), x = 2.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8a$combined[3])), x = 3.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8a$combined[4])), x = 4.5, y = -1.25) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -906,8 +1014,21 @@ d8_a_f <- ggplot(d8_a, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
 
+
+#panel B
+pairs_b <- list(
+  c("beforejob.job_board.1000.1", "beforejob.job_board.1000.2"),
+  c("I(job_board.1000 > 0)", "beforejob.job_board.1000.1"),
+  c("afterjob.job_board.1000.1", "I(job_board.1000 > 0)"),
+  c("afterjob.job_board.1000.2", "afterjob.job_board.1000.1"))
+
+output_8b <- purrr::map(pairs_b, ~calculate_diff_and_significance(draw_jobs, .x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 
 d8_b <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
@@ -921,7 +1042,11 @@ d8_b_f <- ggplot(d8_b, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-1.3, 1), breaks = c(-1.0, -0.5, 0.0, 0.5)) +
-  labs(x ="", y = "Coefficient", title = "(a) Job Title: Director,\nChairman, President,\nPartner") +
+  labs(x ="", y = "Coefficient", caption = "(b) Job Title: Board\nMember") +
+  geom_text(aes(label = paste(output_8b$combined[1])), x = 1.5, y = -1.3) +
+  geom_text(aes(label = paste(output_8b$combined[2])), x = 2.5, y = -1.3) +
+  geom_text(aes(label = paste(output_8b$combined[3])), x = 3.5, y = -1.3) +
+  geom_text(aes(label = paste(output_8b$combined[4])), x = 4.5, y = -1.3) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -929,7 +1054,22 @@ d8_b_f <- ggplot(d8_b, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
+
+
+
+#Panel c 
+pairs_c <- list(
+  c("beforejob.job_prof.1000.1", "beforejob.job_prof.1000.2"),
+  c("I(job_prof.1000 > 0)", "beforejob.job_prof.1000.1"),
+  c("afterjob.job_prof.1000.1", "I(job_prof.1000 > 0)"),
+  c("afterjob.job_prof.1000.2", "afterjob.job_prof.1000.1"))
+
+output_8c <- purrr::map(pairs_c, ~calculate_diff_and_significance(draw_jobs, .x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 d8_c <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
                    low = c(jobs_reg$coefficients[16:20] - (jobs_reg$se[16:20]*1.96)),
@@ -941,8 +1081,12 @@ d8_c_f <- ggplot(d8_c, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
   geom_vline(xintercept = c(2.5, 3.5), color = "grey", linetype = 5) +
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
-  scale_y_continuous(limits = c(-1.25, 1), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "(a) Job Title: Director,\nChairman, President,\nPartner") +
+  scale_y_continuous(limits = c(-1.25, 1), breaks = c(-1, -0.5, 0, 0.5)) +
+  labs(x ="", y = "Coefficient", caption = "(c) Job Title: Professional\nPosition") +
+  geom_text(aes(label = paste(output_8c$combined[1])), x = 1.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8c$combined[2])), x = 2.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8c$combined[3])), x = 3.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8c$combined[4])), x = 4.5, y = -1.25) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -950,8 +1094,21 @@ d8_c_f <- ggplot(d8_c, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
 
+
+#panel d
+pairs_d <- list(
+  c("beforejob.job_consultant.1000.1", "beforejob.job_consultant.1000.2"),
+  c("I(job_consultant.1000 > 0)", "beforejob.job_consultant.1000.1"),
+  c("afterjob.job_consultant.1000.1", "I(job_consultant.1000 > 0)"),
+  c("afterjob.job_consultant.1000.2", "afterjob.job_consultant.1000.1"))
+
+output_8d <- purrr::map(pairs_d, ~calculate_diff_and_significance(draw_jobs, .x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 d8_d <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
                   low = c(jobs_reg$coefficients[11:15] - (jobs_reg$se[11:15]*1.96)),
@@ -964,7 +1121,11 @@ d8_d_f <- ggplot(d8_d, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-1.25, 1), breaks = c(-1.0, -0.5, 0.0, 0.5)) +
-  labs(x ="", y = "Coefficient", title = "(a) Job Title: Director,\nChairman, President,\nPartner") +
+  labs(x ="", y = "Coefficient", caption = "(d) Job Title: Consultant\nAdvisor") +
+  geom_text(aes(label = paste(output_8d$combined[1])), x = 1.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8d$combined[2])), x = 2.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8d$combined[3])), x = 3.5, y = -1.25) +
+  geom_text(aes(label = paste(output_8d$combined[4])), x = 4.5, y = -1.25) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -972,7 +1133,39 @@ d8_d_f <- ggplot(d8_d, aes(x = factor(param, level = c("-2", "-1", "in Job", "1"
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
+
+
+
+coef_est_ind <- coef(ind_reg)
+vcov_est_ind <- ind_reg$robustvcv
+draw_ind <- mvrnorm(10000, coef_est_ind, vcov_est_ind)
+
+calculate_diff_and_significance_ind <- function(var1, var2) {
+  quant <- draw_ind[,var1] - draw_ind[,var2]
+  diff <- mean(quant)
+  pval <- 2*pnorm(-abs(mean(quant)/sd(quant)))
+  sig <- ifelse(pval<=0.1, "·", "")		
+  sig <- ifelse(pval<=0.05, "*", sig)		
+  sig <- ifelse(pval<=0.01, "**", sig)
+  list(out = sprintf("%.3f", diff), sig = sig)
+}
+
+
+
+
+#Panel health 
+pairs_health <- list(
+  c("beforejob.indcat_health.1000.1", "beforejob.indcat_health.1000.2"),
+  c("I(indcat_health.1000 > 0)TRUE", "beforejob.indcat_health.1000.1"),
+  c("afterjob.indcat_health.1000.1", "I(indcat_health.1000 > 0)TRUE"),
+  c("afterjob.indcat_health.1000.2", "afterjob.indcat_health.1000.1"))
+
+output_8health <- purrr::map(pairs_health, ~calculate_diff_and_significance_ind(.x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 
 d8_health <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
@@ -986,7 +1179,11 @@ d8_health_f <- ggplot(d8_health, aes(x = factor(param, level = c("-2", "-1", "in
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-2, 2), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "health") +
+  labs(x ="", y = "Coefficient", caption = "(i) Industry: Health") +
+  geom_text(aes(label = paste(output_8health$combined[1])), x = 1.5, y = -2) +
+  geom_text(aes(label = paste(output_8health$combined[2])), x = 2.5, y = -2) +
+  geom_text(aes(label = paste(output_8health$combined[3])), x = 3.5, y = -2) +
+  geom_text(aes(label = paste(output_8health$combined[4])), x = 4.5, y = -2) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -994,7 +1191,23 @@ d8_health_f <- ggplot(d8_health, aes(x = factor(param, level = c("-2", "-1", "in
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
+
+
+#Panel finance 
+pairs_finance <- list(
+  c("beforejob.indcat_finance.1000.1", "beforejob.indcat_finance.1000.2"),
+  c("I(indcat_finance.1000 > 0)TRUE", "beforejob.indcat_finance.1000.1"),
+  c("afterjob.indcat_finance.1000.1", "I(indcat_finance.1000 > 0)TRUE"),
+  c("afterjob.indcat_finance.1000.2", "afterjob.indcat_finance.1000.1"))
+
+output_8finance <- purrr::map(pairs_finance, ~calculate_diff_and_significance_ind(.x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
+
+
 
 d8_finance <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
                   low = c(ind_reg$coefficients[6:10] - (ind_reg$se[6:10]*1.96)),
@@ -1007,7 +1220,11 @@ d8_finance_f <- ggplot(d8_finance, aes(x = factor(param, level = c("-2", "-1", "
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-2, 2), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "finance") +
+  labs(x ="", y = "Coefficient", caption = "(f) Industry: Finance") +
+  geom_text(aes(label = paste(output_8finance$combined[1])), x = 1.5, y = -2) +
+  geom_text(aes(label = paste(output_8finance$combined[2])), x = 2.5, y = -2) +
+  geom_text(aes(label = paste(output_8finance$combined[3])), x = 3.5, y = -2) +
+  geom_text(aes(label = paste(output_8finance$combined[4])), x = 4.5, y = -2) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -1015,7 +1232,24 @@ d8_finance_f <- ggplot(d8_finance, aes(x = factor(param, level = c("-2", "-1", "
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
+
+
+#Panel consulting
+pairs_consulting <- list(
+  c("beforejob.indcat_consulting.1000.1", "beforejob.indcat_consulting.1000.2"),
+  c("I(indcat_consulting.1000 > 0)TRUE", "beforejob.indcat_consulting.1000.1"),
+  c("afterjob.indcat_consulting.1000.1", "I(indcat_consulting.1000 > 0)TRUE"),
+  c("afterjob.indcat_consulting.1000.2", "afterjob.indcat_consulting.1000.1"))
+
+
+output_8consulting <- purrr::map(pairs_consulting, ~calculate_diff_and_significance_ind(.x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
+
+
 
 d8_consulting <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
                   low = c(ind_reg$coefficients[11:15] - (ind_reg$se[11:15]*1.96)),
@@ -1028,7 +1262,11 @@ d8_consulting_f <- ggplot(d8_consulting, aes(x = factor(param, level = c("-2", "
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-2, 2), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "consulting") +
+  labs(x ="", y = "Coefficient", caption = "(l) Industry: Consulting") +
+  geom_text(aes(label = paste(output_8consulting$combined[1])), x = 1.5, y = -2) +
+  geom_text(aes(label = paste(output_8consulting$combined[2])), x = 2.5, y = -2) +
+  geom_text(aes(label = paste(output_8consulting$combined[3])), x = 3.5, y = -2) +
+  geom_text(aes(label = paste(output_8consulting$combined[4])), x = 4.5, y = -2) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -1036,7 +1274,21 @@ d8_consulting_f <- ggplot(d8_consulting, aes(x = factor(param, level = c("-2", "
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
+
+#Panel knowledge fp 
+pairs_knowledgefp <- list(
+  c("beforejob.indcat_knowledge_fp.1000.1", "beforejob.indcat_knowledge_fp.1000.2"),
+  c("I(indcat_knowledge_fp.1000 > 0)TRUE", "beforejob.indcat_knowledge_fp.1000.1"),
+  c("afterjob.indcat_knowledge_fp.1000.1", "I(indcat_knowledge_fp.1000 > 0)TRUE"),
+  c("afterjob.indcat_knowledge_fp.1000.2", "afterjob.indcat_knowledge_fp.1000.1"))
+
+output_8knowledgefp <- purrr::map(pairs_knowledgefp, ~calculate_diff_and_significance_ind(.x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
+
 
 
 d8_knowledgefp <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
@@ -1050,7 +1302,11 @@ d8_knowledgefp_f <- ggplot(d8_knowledgefp, aes(x = factor(param, level = c("-2",
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-2, 2), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "knowledge fp") +
+  labs(x ="", y = "Coefficient", caption = "(e) Industry: Knowledge (FP)") +
+  geom_text(aes(label = paste(output_8knowledgefp$combined[1])), x = 1.5, y = -2) +
+  geom_text(aes(label = paste(output_8knowledgefp$combined[2])), x = 2.5, y = -2) +
+  geom_text(aes(label = paste(output_8knowledgefp$combined[3])), x = 3.5, y = -2) +
+  geom_text(aes(label = paste(output_8knowledgefp$combined[4])), x = 4.5, y = -2) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -1058,7 +1314,23 @@ d8_knowledgefp_f <- ggplot(d8_knowledgefp, aes(x = factor(param, level = c("-2",
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
+
+
+#Panel knowledge nfp 
+
+pairs_knowledgenfp <- list(
+  c("beforejob.indcat_knowledge_nfp.1000.1", "beforejob.indcat_knowledge_nfp.1000.2"),
+  c("I(indcat_knowledge_nfp.1000 > 0)TRUE", "beforejob.indcat_knowledge_nfp.1000.1"),
+  c("afterjob.indcat_knowledge_nfp.1000.1", "I(indcat_knowledge_nfp.1000 > 0)TRUE"),
+  c("afterjob.indcat_knowledge_nfp.1000.2", "afterjob.indcat_knowledge_nfp.1000.1"))
+
+
+output_8knowledgenfp <- purrr::map(pairs_knowledgenfp, ~calculate_diff_and_significance_ind(.x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 
 d8_knowledgenfp <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
@@ -1072,7 +1344,11 @@ d8_knowledgenfp_f <- ggplot(d8_knowledgenfp, aes(x = factor(param, level = c("-2
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-2, 2), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "knowledge nfp") +
+  labs(x ="", y = "Coefficient", caption = "(k) Industry: Knowledge (NFP)") +
+  geom_text(aes(label = paste(output_8knowledgenfp$combined[1])), x = 1.5, y = -2) +
+  geom_text(aes(label = paste(output_8knowledgenfp$combined[2])), x = 2.5, y = -2) +
+  geom_text(aes(label = paste(output_8knowledgenfp$combined[3])), x = 3.5, y = -2) +
+  geom_text(aes(label = paste(output_8knowledgenfp$combined[4])), x = 4.5, y = -2) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -1080,8 +1356,22 @@ d8_knowledgenfp_f <- ggplot(d8_knowledgenfp, aes(x = factor(param, level = c("-2
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
 
+
+#Panel goods 
+pairs_goods <- list(
+  c("beforejob.indcat_goods.1000.1", "beforejob.indcat_goods.1000.2"),
+  c("I(indcat_goods.1000 > 0)TRUE", "beforejob.indcat_goods.1000.1"),
+  c("afterjob.indcat_goods.1000.1", "I(indcat_goods.1000 > 0)TRUE"),
+  c("afterjob.indcat_goods.1000.2", "afterjob.indcat_goods.1000.1"))
+
+
+output_8goods <- purrr::map(pairs_goods, ~calculate_diff_and_significance_ind(.x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 d8_goods <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
                   low = c(ind_reg$coefficients[26:30] - (ind_reg$se[26:30]*1.96)),
@@ -1094,7 +1384,11 @@ d8_goods_f <- ggplot(d8_goods, aes(x = factor(param, level = c("-2", "-1", "in J
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-2, 1.5), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "goods") +
+  labs(x ="", y = "Coefficient", caption = "(h) Industry: Goods") +
+  geom_text(aes(label = paste(output_8goods$combined[1])), x = 1.5, y = -2) +
+  geom_text(aes(label = paste(output_8goods$combined[2])), x = 2.5, y = -2) +
+  geom_text(aes(label = paste(output_8goods$combined[3])), x = 3.5, y = -2) +
+  geom_text(aes(label = paste(output_8goods$combined[4])), x = 4.5, y = -2) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -1102,7 +1396,21 @@ d8_goods_f <- ggplot(d8_goods, aes(x = factor(param, level = c("-2", "-1", "in J
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
+
+
+#Panel services 
+pairs_services <- list(
+  c("beforejob.indcat_services.1000.1", "beforejob.indcat_services.1000.2"),
+  c("I(indcat_services.1000 > 0)TRUE", "beforejob.indcat_services.1000.1"),
+  c("afterjob.indcat_services.1000.1", "I(indcat_services.1000 > 0)TRUE"),
+  c("afterjob.indcat_services.1000.2", "afterjob.indcat_services.1000.1"))
+
+output_8services <- purrr::map(pairs_services, ~calculate_diff_and_significance_ind(.x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 
 d8_services <- data.frame(param = c("-2", "-1", "in Job", "1", "2"),
@@ -1116,7 +1424,11 @@ d8_services_f <- ggplot(d8_services, aes(x = factor(param, level = c("-2", "-1",
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-2, 1.5), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "services") +
+  labs(x ="", y = "Coefficient", caption = "(j) Industry: Services") +
+  geom_text(aes(label = paste(output_8services$combined[1])), x = 1.5, y = -2) +
+  geom_text(aes(label = paste(output_8services$combined[2])), x = 2.5, y = -2) +
+  geom_text(aes(label = paste(output_8services$combined[3])), x = 3.5, y = -2) +
+  geom_text(aes(label = paste(output_8services$combined[4])), x = 4.5, y = -2) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -1124,7 +1436,21 @@ d8_services_f <- ggplot(d8_services, aes(x = factor(param, level = c("-2", "-1",
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, hjust = 0.5))
+
+#Panel other 
+pairs_other<- list(
+  c("beforejob.indcat_other.1000.1", "beforejob.indcat_other.1000.2"),
+  c("I(indcat_other.1000 > 0)TRUE", "beforejob.indcat_other.1000.1"),
+  c("afterjob.indcat_other.1000.1", "I(indcat_other.1000 > 0)TRUE"),
+  c("afterjob.indcat_other.1000.2", "afterjob.indcat_other.1000.1"))
+
+
+output_8other <- purrr::map(pairs_other, ~calculate_diff_and_significance_ind(.x[1], .x[2])) %>%
+  reduce(~list(out = rbind(.x$out, .y$out), sig = rbind(.x$sig, .y$sig))) %>%
+  {tibble(out = .[[1]], sig = .[[2]])} %>%
+  mutate(combined = paste0(out, sig))
 
 
 
@@ -1139,7 +1465,11 @@ d8_other_f <- ggplot(d8_other, aes(x = factor(param, level = c("-2", "-1", "in J
   geom_pointrange(aes(ymax = high, ymin = low), color = "black", linewidth = 1) + 
   scale_x_discrete(breaks = c("-2", "-1", "in Job", "1", "2")) +
   scale_y_continuous(limits = c(-2, 1.5), breaks = c(-2, -1, 0, 1)) +
-  labs(x ="", y = "Coefficient", title = "other") +
+  labs(x ="", y = "Coefficient", caption = "(g) Industry: Other") +
+  geom_text(aes(label = paste(output_8other$combined[1])), x = 1.5, y = -2) +
+  geom_text(aes(label = paste(output_8other$combined[2])), x = 2.5, y = -2) +
+  geom_text(aes(label = paste(output_8other$combined[3])), x = 3.5, y = -2) +
+  geom_text(aes(label = paste(output_8other$combined[4])), x = 4.5, y = -2) +
   theme_minimal() +
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank(),
         axis.line.x = element_line(color="grey", size = 0.5),
@@ -1147,7 +1477,9 @@ d8_other_f <- ggplot(d8_other, aes(x = factor(param, level = c("-2", "-1", "in J
         axis.text.x =  element_text(size = 8),
         axis.line.y = element_line(color="grey", size = 0.5),
         axis.text.y = element_text(size = 10, angle = 0),
-        plot.title = element_text(face = "bold", color = "black", size = 10))
+        axis.title.y = element_text(size = 8),
+        plot.caption = element_text(color = "black", size = 10, 
+                                    hjust = 0.5))
 
 
 
@@ -1158,8 +1490,8 @@ grid.arrange(
   d8_health_f, d8_services_f, d8_knowledgenfp_f, d8_consulting_f,
   nrow=3, 
   ncol=4,
-  top=text_grob("FIGURE 8 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("FIGURE 8 Temporal Dynamics of Private Sector Employment on Written Parliamentary\n                 Questions by Job Title and Industry, Conservative MPs", 
+                size = 20, face = "bold", hjust = 0, x = 0))
 
 fig_8 <- grid.arrange(
   d8_a_f, d8_b_f, d8_c_f, d8_d_f,
@@ -1167,10 +1499,10 @@ fig_8 <- grid.arrange(
   d8_health_f, d8_services_f, d8_knowledgenfp_f, d8_consulting_f,
   nrow=3, 
   ncol=4,
-  top=text_grob("FIGURE 8 ", 
-                size = 15, face = "bold", hjust = 0.7))
+  top=text_grob("FIGURE 8 Temporal Dynamics of Private Sector Employment on Written Parliamentary\n                 Questions by Job Title and Industry, Conservative MPs", 
+                size = 20, face = "bold", hjust = 0, x = 0))
 
-ggsave(file="fig_8_assignment2.pdf", fig_8)
+ggsave(path = "/Users/thomaspadkjaer/Library/CloudStorage/OneDrive-Personligt/Statskundskab/AQM/Assingment_2", file="fig_8_assignment2.pdf", fig_8, height = 8, width = 13.4)
 
 
 
